@@ -1,17 +1,11 @@
 package com.candy1126xx.superrecorder;
 
-import android.graphics.Rect;
 import android.hardware.Camera;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
 import android.view.Surface;
 import android.view.SurfaceHolder;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 /**
  * Created by Administrator on 2017/6/20 0020.
@@ -48,7 +42,7 @@ public class CameraDevice {
         this.cameraManager.setCallback(new CameraManager.CameraManagerCallback() {
             @Override
             public void openCameraSuccess(Camera camera) {
-                mission = new RecorderMission(camera, displaySurface, codecSurface, exceptWidth, exceptHeight, new Rect(0, 0, windowWidth, windowHeight));
+                mission = new RecorderMission(camera, displaySurface, codecSurface, exceptWidth, exceptHeight, windowWidth, windowHeight);
             }
 
             @Override

@@ -4,12 +4,10 @@ import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.opengl.GLES20;
-import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
 import java.io.IOException;
-import java.util.Iterator;
 
 import javax.microedition.khronos.egl.EGLSurface;
 
@@ -33,11 +31,14 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener,
 
     private BeautyRender render;
 
-    private Rect mCrop;
     private Rect viewPort = new Rect();
 
-    public RecorderMission(Camera camera, SurfaceHolder displaySurface, Surface codecSurface, int exceptWidth, int exceptHeight, Rect mCrop) {
-        this.mCrop = mCrop;
+    private int windowWidth;
+    private int windowHeight;
+
+    public RecorderMission(Camera camera, SurfaceHolder displaySurface, Surface codecSurface, int exceptWidth, int exceptHeight, int windowWidth, int windowHeight) {
+        this.windowWidth = windowWidth;
+        this.windowHeight = windowHeight;
         eglWrapper = new EGLWrapper(null, 1);
         tempEGLSurface = eglWrapper.createPbufferSurface(1, 1);
         displayEGLSurface = eglWrapper.createWindowSurface(displaySurface);
@@ -51,7 +52,7 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener,
         render = new BeautyRender();
         render.setRenderOutput(this);
         render.setInputTexture(mTextureTarget, mTextureID);
-        render.setInputSize(exceptWidth, exceptHeight, mCrop);
+        render.setInputSize(exceptWidth, exceptHeight, windowWidth, windowHeight);
         render.realize();
 
         try {
@@ -80,7 +81,7 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener,
         GLES20.glBindFramebuffer('赀', 0);
         GLES20.glClearColor(0.0F, 0.0F, 0.0F, 0.0F);
         GLES20.glClear(16384);
-        calculateViewPort(mCrop.width(), mCrop.height(), viewPort);
+        calculateViewPort(windowWidth, windowHeight, viewPort);
         GLES20.glViewport(viewPort.left, viewPort.top, viewPort.width(), viewPort.height());
     }
 

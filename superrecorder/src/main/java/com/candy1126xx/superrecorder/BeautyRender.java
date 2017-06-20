@@ -8,26 +8,33 @@ import android.graphics.Rect;
 
 public class BeautyRender {
 
-    private GlProgram _CameraProgram;
-    private GlFrameBuffer _CameraFrameBuffer;
-    private GlTexture _CameraTexture;
+    // Camera Shader Program
+    private GlProgram cameraProgram;
+    private GlFrameBuffer cameraFrameBuffer;
+    private GlTexture cameraTexture;
+
     private float[] _TextureTransform;
-    private int _PreviewWidth = 640;
-    private int _PreviewHeight = 360;
-    private Rect _Crop = new Rect(0, 0, 640, 360);
+
+    private int exceptWidth;
+    private int exceptHeight;
+
+    private int windowWidth;
+    private int windowHeight;
+
     private int _InputTextureTarget;
     private int _InputTextureID;
-    RenderOutput _RenderOutput;
+
+    private RenderOutput _RenderOutput;
 
     public void realize() {
-        this._CameraTexture = new GlTexture(3553, this._Crop.width(), this._Crop.height());
-        this._CameraFrameBuffer = new GlFrameBuffer(this._CameraTexture.getID());
-        this._CameraProgram = new GlProgram(GlFilter.getStandardVertShader(), GlFilter.getStandardFragShader(this._InputTextureTarget));
+        cameraTexture = new GlTexture(3553, windowWidth, windowHeight);
+        cameraFrameBuffer = new GlFrameBuffer(cameraTexture.getID());
+        cameraProgram = new GlProgram(GlFilter.getStandardVertShader(), GlFilter.getStandardFragShader(this._InputTextureTarget));
     }
 
     public void unrealize() {
-        this._CameraTexture = null;
-        this._CameraProgram = null;
+        cameraTexture = null;
+        cameraProgram = null;
     }
 
     public void setInputTexture(int textureTarget, int textureID) {
@@ -39,18 +46,18 @@ public class BeautyRender {
         this._TextureTransform = mat4;
     }
 
-    public void setInputSize(int width, int height, Rect crop) {
-        this._PreviewWidth = width;
-        this._PreviewHeight = height;
-        if (this._Crop == null || this._Crop.width() != crop.width() || this._Crop.height() != crop.height()) {
-            this._Crop = crop;
-            if (this._CameraTexture != null) {
-                this._CameraTexture.release();
-            }
+    public void setInputSize(int exceptWidth, int exceptHeight, int windowWidth, int windowHeight) {
+        this.exceptWidth = exceptWidth;
+        this.exceptHeight = exceptHeight;
+        if (windowWidth * windowHeight == 0 || this.windowWidth != windowWidth || this.windowHeight != windowHeight) {
+            this.windowWidth = windowWidth;
+            this.windowHeight = windowHeight;
 
-            this._CameraTexture = new GlTexture(3553, this._Crop.width(), this._Crop.height());
-            if (this._CameraFrameBuffer != null) this._CameraFrameBuffer.release();
-            this._CameraFrameBuffer = new GlFrameBuffer(this._CameraTexture.getID());
+            if (cameraTexture != null) cameraTexture.release();
+            cameraTexture = new GlTexture(3553, windowWidth, windowHeight);
+
+            if (cameraFrameBuffer != null) cameraFrameBuffer.release();
+            cameraFrameBuffer = new GlFrameBuffer(cameraTexture.getID());
         }
 
     }
@@ -61,7 +68,14 @@ public class BeautyRender {
 
     public void draw() {
         this._RenderOutput.beginFrame();
-        BeautySkinning.drawFirstCameraTexture(this._CameraProgram, this._InputTextureTarget, this._InputTextureID, GlProgram.getVertexArray((float) this._PreviewWidth, (float) this._PreviewHeight), GlProgram.mTextureCoord, this._TextureTransform, GlProgram.getScaleTranslation(this._Crop));
+        BeautySkinning.drawFirstCameraTexture(
+                cameraProgram,
+                this._InputTextureTarget,
+                this._InputTextureID,
+                GlProgram.getVertexArray((float) exceptWidth, (float) exceptHeight),
+                GlProgram.mTextureCoord,
+                this._TextureTransform,
+                GlProgram.getScaleTranslation(new Rect(0, 0, windowWidth, windowHeight)));
         this._RenderOutput.endFrame();
     }
 }
