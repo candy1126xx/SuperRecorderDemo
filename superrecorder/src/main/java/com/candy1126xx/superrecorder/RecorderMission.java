@@ -4,10 +4,12 @@ import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.opengl.GLES20;
+import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 import javax.microedition.khronos.egl.EGLSurface;
 
@@ -85,6 +87,20 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener,
     @Override
     public void endFrame() {
 
+    }
+
+    public void finish() {
+        eglWrapper.releaseSurface(tempEGLSurface);
+        eglWrapper.releaseSurface(displayEGLSurface);
+        eglWrapper.releaseSurface(codecEGLSurface);
+        eglWrapper.release();
+        eglWrapper = null;
+
+        render.unrealize();
+        render = null;
+
+        surfaceTexture.release();
+        surfaceTexture = null;
     }
 
     private void calculateViewPort(int sw, int sh, Rect rect) {

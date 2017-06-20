@@ -5,6 +5,11 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 import static android.hardware.Camera.CameraInfo.CAMERA_FACING_BACK;
 
 /**
@@ -25,6 +30,10 @@ public class CameraManager {
 
     private Camera currentCamera;
 
+    private Camera.CameraInfo currentInfo;
+
+    private Camera.Parameters currentParameters;
+
     private CameraManagerCallback callback;
 
     public CameraManager() {
@@ -42,23 +51,31 @@ public class CameraManager {
         return cameraCount;
     }
 
-    public Camera.CameraInfo getCameraInfo(int ID) {
-        return infos[ID];
+    public Camera.CameraInfo getCameraInfo() {
+        return currentInfo;
     }
 
     public Camera.Parameters getCameraParameters() {
-        return currentCamera.getParameters();
+        return currentParameters;
     }
 
     // 根据ID打开相应的摄像头
-    public void openCameraByID(int id) {
+    public void openCameraByID(int id, int exceptWidth, int exceptHeight) {
         try {
             // case：切换摄像头时，要等待另一个摄像头完全关闭
             while(currentCamera != null) {
                 wait();
             }
             currentCamera = Camera.open(id);
-            if (callback != null) callback.openCameraSuccess(currentCamera, getCameraInfo(id), getCameraParameters());
+            currentInfo = infos[id];
+            currentParameters = currentCamera.getParameters();
+            Camera.Size size = calculatePreviewSize(exceptWidth, exceptHeight);
+            if (size == null) {
+
+            }else {
+                initCamera(size);
+                if (callback != null) callback.openCameraSuccess(currentCamera);
+            }
         }catch (RuntimeException | InterruptedException e) {
             if (callback != null) callback.openCameraFail();
         }
@@ -83,12 +100,67 @@ public class CameraManager {
         notifyAll();
     }
 
+    private void initCamera(Camera.Size previewSize) {
+        currentParameters.setPreviewSize(previewSize.width, previewSize.height);
+        currentCamera.setParameters(currentParameters);
+        currentCamera.setDisplayOrientation(currentInfo.orientation);
+    }
+
+    private Camera.Size calculatePreviewSize(int exceptWidth, int exceptHeight) {
+        int width = exceptWidth;
+        int height = exceptHeight;
+        switch (currentInfo.orientation) {
+            case 90:
+            case 270:
+                width = exceptHeight;
+                height = exceptWidth;
+            default:
+                List<Camera.Size> supported_list = currentParameters.getSupportedPreviewSizes();
+                float aspect_ratio = 0.0F;
+                Camera.Size strict_list = currentParameters.getPreferredPreviewSizeForVideo();
+                if (strict_list != null)
+                    aspect_ratio = (float) strict_list.width / (float) strict_list.height;
+
+                ArrayList<Camera.Size> var15 = new ArrayList<>();
+                ArrayList<Camera.Size> loose_list = new ArrayList<>();
+
+                int var12 = supported_list.size();
+                int var13 = 0;
+
+                for (; var13 < var12; ++var13) {
+                    Camera.Size s = supported_list.get(var13);
+                    if (s.width >= width && s.height >= height) {
+                        loose_list.add(s);
+                        if (aspect_ratio == 0.0F || (float) s.width / (float) s.height == aspect_ratio) {
+                            var15.add(s);
+                        }
+                    }
+                }
+
+                if (var15.isEmpty()) {
+                    if (loose_list.isEmpty()) {
+                        return null;
+                    }
+
+                    var15 = loose_list;
+                }
+
+                Collections.sort(var15, new Comparator<Camera.Size>() {
+                    @Override
+                    public int compare(Camera.Size lhs, Camera.Size rhs) {
+                        return lhs.width * lhs.height - rhs.width * rhs.height;
+                    }
+                });
+                return var15.get(0);
+        }
+    }
+
     public void setCallback(CameraManagerCallback callback) {
         this.callback = callback;
     }
 
     public interface CameraManagerCallback{
-        void openCameraSuccess(Camera camera, Camera.CameraInfo info, Camera.Parameters parameters);
+        void openCameraSuccess(Camera camera);
         void openCameraFail();
     }
 

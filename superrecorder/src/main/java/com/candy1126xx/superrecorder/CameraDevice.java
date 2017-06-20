@@ -47,16 +47,8 @@ public class CameraDevice {
         this.cameraManager = new CameraManager();
         this.cameraManager.setCallback(new CameraManager.CameraManagerCallback() {
             @Override
-            public void openCameraSuccess(Camera camera, Camera.CameraInfo info, Camera.Parameters parameters) {
-                Camera.Size previewSize = calculatePreviewSize(exceptWidth, exceptHeight);
-                if (previewSize == null) {
-
-                } else {
-                    parameters.setPreviewSize(previewSize.width, previewSize.height);
-                    camera.setParameters(parameters);
-                    camera.setDisplayOrientation(info.orientation);
-                    mission = new RecorderMission(camera, displaySurface, codecSurface, exceptWidth, exceptHeight, new Rect(0, 0, windowWidth, windowHeight));
-                }
+            public void openCameraSuccess(Camera camera) {
+                mission = new RecorderMission(camera, displaySurface, codecSurface, exceptWidth, exceptHeight, new Rect(0, 0, windowWidth, windowHeight));
             }
 
             @Override
@@ -90,10 +82,11 @@ public class CameraDevice {
             public boolean handleMessage(Message msg) {
                 switch (msg.what) {
                     case 1:
-                        cameraManager.openCameraByID(currentID);
+                        cameraManager.openCameraByID(currentID, CameraDevice.this.exceptWidth, CameraDevice.this.exceptHeight);
                         break;
                     case 2:
                         cameraManager.closeCamera();
+                        mission.finish();
                         break;
                 }
                 return true;
@@ -116,56 +109,5 @@ public class CameraDevice {
     // 结束任务
     public void finishMission() {
         cameraHandler.obtainMessage(2).sendToTarget();
-    }
-
-    private Camera.Size calculatePreviewSize(int exceptWidth, int exceptHeight) {
-        int width = exceptWidth;
-        int height = exceptHeight;
-        Camera.CameraInfo info = cameraManager.getCameraInfo(currentID);
-        Camera.Parameters parameters = cameraManager.getCameraParameters();
-        switch (info.orientation) {
-            case 90:
-            case 270:
-                width = exceptHeight;
-                height = exceptWidth;
-            default:
-                List<Camera.Size> supported_list = parameters.getSupportedPreviewSizes();
-                float aspect_ratio = 0.0F;
-                Camera.Size strict_list = parameters.getPreferredPreviewSizeForVideo();
-                if (strict_list != null)
-                    aspect_ratio = (float) strict_list.width / (float) strict_list.height;
-
-                ArrayList<Camera.Size> var15 = new ArrayList<>();
-                ArrayList<Camera.Size> loose_list = new ArrayList<>();
-
-                int var12 = supported_list.size();
-                int var13 = 0;
-
-                for (; var13 < var12; ++var13) {
-                    Camera.Size s = supported_list.get(var13);
-                    if (s.width >= width && s.height >= height) {
-                        loose_list.add(s);
-                        if (aspect_ratio == 0.0F || (float) s.width / (float) s.height == aspect_ratio) {
-                            var15.add(s);
-                        }
-                    }
-                }
-
-                if (var15.isEmpty()) {
-                    if (loose_list.isEmpty()) {
-                        return null;
-                    }
-
-                    var15 = loose_list;
-                }
-
-                Collections.sort(var15, new Comparator<Camera.Size>() {
-                    @Override
-                    public int compare(Camera.Size lhs, Camera.Size rhs) {
-                        return lhs.width * lhs.height - rhs.width * rhs.height;
-                    }
-                });
-                return var15.get(0);
-        }
     }
 }
