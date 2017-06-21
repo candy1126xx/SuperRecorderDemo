@@ -1,5 +1,6 @@
 package com.candy1126xx.superrecorder;
 
+import android.content.res.AssetManager;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
@@ -37,7 +38,7 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener,
     private int exceptWidth;
     private int exceptHeight;
 
-    public RecorderMission(Camera camera, SurfaceHolder displaySurface, Surface codecSurface, int exceptWidth, int exceptHeight) {
+    public RecorderMission(AssetManager manager, Camera camera, SurfaceHolder displaySurface, Surface codecSurface, int exceptWidth, int exceptHeight) {
         this.exceptWidth = exceptWidth;
         this.exceptHeight = exceptHeight;
         eglWrapper = new EGLWrapper(null, 1);
@@ -50,7 +51,7 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener,
         surfaceTexture = new SurfaceTexture(mTextureID);
         surfaceTexture.setOnFrameAvailableListener(this);
 
-        render = new BeautyRender();
+        render = new BeautyRender(manager);
         render.setRenderOutput(this);
         render.setInputTexture(mTextureTarget, mTextureID);
         render.setInputSize(exceptWidth, exceptHeight);

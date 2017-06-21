@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         surfaceView.getHolder().setFixedSize(exceptWidth, exceptHeight);
         surfaceView.getHolder().addCallback(this);
 
-        device = CameraDevice.getInstance();
+        device = CameraDevice.getInstance(getApplication());
     }
 
     @Override

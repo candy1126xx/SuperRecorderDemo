@@ -1,5 +1,7 @@
 package com.candy1126xx.superrecorder;
 
+import android.app.Application;
+import android.content.res.AssetManager;
 import android.hardware.Camera;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -35,12 +37,15 @@ public class CameraDevice {
 
     private RecorderMission mission;
 
-    private CameraDevice() {
+    private AssetManager manager;
+
+    private CameraDevice(Application app) {
+        this.manager = app.getAssets();
         this.cameraManager = new CameraManager();
         this.cameraManager.setCallback(new CameraManager.CameraManagerCallback() {
             @Override
             public void openCameraSuccess(Camera camera) {
-                mission = new RecorderMission(camera, displaySurface, codecSurface, exceptWidth, exceptHeight);
+                mission = new RecorderMission(manager, camera, displaySurface, codecSurface, exceptWidth, exceptHeight);
             }
 
             @Override
@@ -50,8 +55,8 @@ public class CameraDevice {
         });
     }
 
-    public static CameraDevice getInstance() {
-        if (cameraDevice == null) cameraDevice = new CameraDevice();
+    public static CameraDevice getInstance(Application app) {
+        if (cameraDevice == null) cameraDevice = new CameraDevice(app);
         return cameraDevice;
     }
 

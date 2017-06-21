@@ -18,9 +18,8 @@ public class GlFrameBuffer {
         GlUtil.checkGlError("glGenFramebuffers");
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, this.mFrameBuffer.get(0));
         GlUtil.checkGlError("glBindFramebuffer");
-        GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, '賠', GLES20.GL_TEXTURE_2D, textureID, 0);
+        GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, textureID, 0);
         GlUtil.checkGlError("glFramebufferTexture2D");
-        int status = GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER);
     }
 
     public void release() {
