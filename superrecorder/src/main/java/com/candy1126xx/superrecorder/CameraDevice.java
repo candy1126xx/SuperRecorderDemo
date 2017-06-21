@@ -13,7 +13,7 @@ import android.view.SurfaceHolder;
  * Created by Administrator on 2017/6/20 0020.
  */
 
-public class CameraDevice {
+public class CameraDevice implements CameraManager.CameraManagerCallback {
 
     private static CameraDevice cameraDevice;
 
@@ -33,26 +33,12 @@ public class CameraDevice {
 
     private Handler cameraHandler;
 
-    private int currentID;
-
     private RecorderMission mission;
 
     private AssetManager manager;
 
     private CameraDevice(Application app) {
         this.manager = app.getAssets();
-        this.cameraManager = new CameraManager();
-        this.cameraManager.setCallback(new CameraManager.CameraManagerCallback() {
-            @Override
-            public void openCameraSuccess(Camera camera) {
-                mission = new RecorderMission(manager, camera, displaySurface, codecSurface, exceptWidth, exceptHeight);
-            }
-
-            @Override
-            public void openCameraFail() {
-
-            }
-        });
     }
 
     public static CameraDevice getInstance(Application app) {
@@ -68,16 +54,20 @@ public class CameraDevice {
         this.bitRate = bitRate;
         this.displaySurface = displaySurface;
 
-        currentID = cameraManager.findCameraID(facing);
-        if (currentID == -1) currentID = 0;
-        cameraThread = new HandlerThread("Camera" + currentID);
+        // 创建CameraManager
+        cameraManager = new CameraManager();
+        cameraManager.init(facing, exceptWidth, exceptHeight);
+        cameraManager.setCallback(this);
+
+        // 创建子线程
+        cameraThread = new HandlerThread("Camera" + facing);
         cameraThread.start();
         cameraHandler = new Handler(cameraThread.getLooper(), new Handler.Callback() {
             @Override
             public boolean handleMessage(Message msg) {
                 switch (msg.what) {
                     case 1:
-                        cameraManager.openCameraByID(currentID, CameraDevice.this.exceptWidth, CameraDevice.this.exceptHeight);
+                        cameraManager.openCamera();
                         break;
                     case 2:
                         cameraManager.closeCamera();
@@ -88,12 +78,29 @@ public class CameraDevice {
             }
         });
 
+        // 创建编码器
         mediaCodec = new MediaCodecRecorder();
     }
 
-    // 创建图像录制任务
+    // 创建图像录制任务，实际是打开摄像头
     public void createMission() {
         cameraHandler.obtainMessage(1).sendToTarget();
+    }
+
+    // 打开摄像头后创建任务
+    @Override
+    public void openCameraSuccess(Camera camera) {
+        mission = new RecorderMission(manager, camera, displaySurface, codecSurface, exceptWidth, exceptHeight);
+    }
+
+    @Override
+    public void openCameraFail() {
+
+    }
+
+    @Override
+    public void cannotFindCamera() {
+
     }
 
     // 是否输出到编码器

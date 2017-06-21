@@ -20,13 +20,9 @@ public class CameraManager {
 
     private int cameraCount;
 
-    /**
-     * 包含信息：
-     * facing:前置or后置
-     * orientation:摄像头与屏幕角度
-     * canDisableShutterSound:是否可以关闭拍照声音
-     */
     private Camera.CameraInfo[] infos;
+
+    private int currentID;
 
     private Camera currentCamera;
 
@@ -35,6 +31,10 @@ public class CameraManager {
     private Camera.Parameters currentParameters;
 
     private CameraManagerCallback callback;
+
+    private int exceptWidth, exceptHeight;
+
+    private Camera.Size previewSize;
 
     public CameraManager() {
         cameraCount = Camera.getNumberOfCameras();
@@ -46,34 +46,32 @@ public class CameraManager {
         }
     }
 
-    // 获取摄像头数量
-    public int getCamerasCount() {
-        return cameraCount;
+    public void init(int facing, int exceptWidth, int exceptHeight) {
+        this.exceptWidth = exceptWidth;
+        this.exceptHeight = exceptHeight;
+        this.currentID = findCameraID(facing);
     }
 
-    public Camera.CameraInfo getCameraInfo() {
-        return currentInfo;
-    }
+    // 打开摄像头
+    public synchronized void openCamera() {
+        if (currentID < 0) {
+            if (callback != null) callback.cannotFindCamera();
+            return;
+        }
 
-    public Camera.Parameters getCameraParameters() {
-        return currentParameters;
-    }
-
-    // 根据ID打开相应的摄像头
-    public void openCameraByID(int id, int exceptWidth, int exceptHeight) {
         try {
             // case：切换摄像头时，要等待另一个摄像头完全关闭
             while(currentCamera != null) {
                 wait();
             }
-            currentCamera = Camera.open(id);
-            currentInfo = infos[id];
+            currentCamera = Camera.open(currentID);
+            currentInfo = infos[currentID];
             currentParameters = currentCamera.getParameters();
-            Camera.Size previewSize = calculatePreviewSize(exceptWidth, exceptHeight);
+            previewSize = calculatePreviewSize();
             if (previewSize == null) {
 
             }else {
-                initCamera(previewSize);
+                initCamera();
                 if (callback != null) callback.openCameraSuccess(currentCamera);
             }
         }catch (RuntimeException | InterruptedException e) {
@@ -82,31 +80,31 @@ public class CameraManager {
     }
 
     // 根据方向找到摄像头ID
-    public int findCameraID(int facing) {
-        int frontID = -1;
+    private int findCameraID(int facing) {
+        int id;
         for (int i = 0; i < cameraCount; i++) {
             if (infos[i].facing == facing) {
-                frontID = i;
-                return frontID;
+                id = i;
+                return id;
             }
         }
-        return frontID;
+        return cameraCount > 0 ? 0 : -1;
     }
 
     // 关闭摄像头
-    public void closeCamera() {
+    public synchronized void closeCamera() {
         currentCamera.release();
         currentCamera = null;
         notifyAll();
     }
 
-    private void initCamera(Camera.Size previewSize) {
+    private void initCamera() {
         currentParameters.setPreviewSize(previewSize.width, previewSize.height);
         currentCamera.setParameters(currentParameters);
         currentCamera.setDisplayOrientation(currentInfo.orientation);
     }
 
-    private Camera.Size calculatePreviewSize(int exceptWidth, int exceptHeight) {
+    private Camera.Size calculatePreviewSize() {
         int width = exceptWidth;
         int height = exceptHeight;
         switch (currentInfo.orientation) {
@@ -162,6 +160,7 @@ public class CameraManager {
     public interface CameraManagerCallback{
         void openCameraSuccess(Camera camera);
         void openCameraFail();
+        void cannotFindCamera();
     }
 
 }
