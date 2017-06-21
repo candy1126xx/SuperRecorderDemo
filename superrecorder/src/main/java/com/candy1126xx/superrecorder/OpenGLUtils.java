@@ -17,10 +17,10 @@ public class OpenGLUtils {
         int texId = textures[0];
         GLES20.glBindTexture(texture_target, texId);
         checkGlError("glBindTexture " + texId);
-        GLES20.glTexParameterf(texture_target, 10241, 9728.0F);
-        GLES20.glTexParameterf(texture_target, 10240, 9729.0F);
-        GLES20.glTexParameteri(texture_target, 10242, '脯');
-        GLES20.glTexParameteri(texture_target, 10243, '脯');
+        GLES20.glTexParameterf(texture_target, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
+        GLES20.glTexParameterf(texture_target, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+        GLES20.glTexParameteri(texture_target, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameteri(texture_target, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
         checkGlError("glTexParameter");
         return texId;
     }

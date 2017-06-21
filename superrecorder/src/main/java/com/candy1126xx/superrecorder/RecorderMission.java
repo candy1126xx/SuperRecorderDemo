@@ -3,6 +3,7 @@ package com.candy1126xx.superrecorder;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -21,7 +22,7 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener,
     private EGLSurface displayEGLSurface;
     private EGLSurface codecEGLSurface;
 
-    private int mTextureTarget = '赥';
+    private int mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
     private int mTextureID;
     private SurfaceTexture surfaceTexture;
 
@@ -33,12 +34,12 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener,
 
     private Rect viewPort = new Rect();
 
-    private int windowWidth;
-    private int windowHeight;
+    private int exceptWidth;
+    private int exceptHeight;
 
-    public RecorderMission(Camera camera, SurfaceHolder displaySurface, Surface codecSurface, int exceptWidth, int exceptHeight, int windowWidth, int windowHeight) {
-        this.windowWidth = windowWidth;
-        this.windowHeight = windowHeight;
+    public RecorderMission(Camera camera, SurfaceHolder displaySurface, Surface codecSurface, int exceptWidth, int exceptHeight) {
+        this.exceptWidth = exceptWidth;
+        this.exceptHeight = exceptHeight;
         eglWrapper = new EGLWrapper(null, 1);
         tempEGLSurface = eglWrapper.createPbufferSurface(1, 1);
         displayEGLSurface = eglWrapper.createWindowSurface(displaySurface);
@@ -52,7 +53,7 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener,
         render = new BeautyRender();
         render.setRenderOutput(this);
         render.setInputTexture(mTextureTarget, mTextureID);
-        render.setInputSize(exceptWidth, exceptHeight, windowWidth, windowHeight);
+        render.setInputSize(exceptWidth, exceptHeight);
         render.realize();
 
         try {
@@ -78,10 +79,10 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener,
 
     @Override
     public void beginFrame() {
-        GLES20.glBindFramebuffer('赀', 0);
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
         GLES20.glClearColor(0.0F, 0.0F, 0.0F, 0.0F);
-        GLES20.glClear(16384);
-        calculateViewPort(windowWidth, windowHeight, viewPort);
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+        calculateViewPort(exceptWidth, exceptHeight, viewPort);
         GLES20.glViewport(viewPort.left, viewPort.top, viewPort.width(), viewPort.height());
     }
 

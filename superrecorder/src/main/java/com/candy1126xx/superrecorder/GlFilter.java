@@ -1,5 +1,6 @@
 package com.candy1126xx.superrecorder;
 
+import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.Log;
 
@@ -23,7 +24,7 @@ public class GlFilter {
         String extension;
         String sampler;
         switch(target) {
-            case 3553:
+            case GLES20.GL_TEXTURE_2D:
                 extension = "";
                 sampler = "uniform sampler2D camerTexture;\n";
                 break;

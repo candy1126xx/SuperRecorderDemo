@@ -69,11 +69,11 @@ public class CameraManager {
             currentCamera = Camera.open(id);
             currentInfo = infos[id];
             currentParameters = currentCamera.getParameters();
-            Camera.Size size = calculatePreviewSize(exceptWidth, exceptHeight);
-            if (size == null) {
+            Camera.Size previewSize = calculatePreviewSize(exceptWidth, exceptHeight);
+            if (previewSize == null) {
 
             }else {
-                initCamera(size);
+                initCamera(previewSize);
                 if (callback != null) callback.openCameraSuccess(currentCamera);
             }
         }catch (RuntimeException | InterruptedException e) {

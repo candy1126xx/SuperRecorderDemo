@@ -17,8 +17,6 @@ public class CameraDevice {
 
     private int exceptWidth;
     private int exceptHeight;
-    private int windowWidth;
-    private int windowHeight;
     private int frameRate;
     private int bitRate;
 
@@ -42,7 +40,7 @@ public class CameraDevice {
         this.cameraManager.setCallback(new CameraManager.CameraManagerCallback() {
             @Override
             public void openCameraSuccess(Camera camera) {
-                mission = new RecorderMission(camera, displaySurface, codecSurface, exceptWidth, exceptHeight, windowWidth, windowHeight);
+                mission = new RecorderMission(camera, displaySurface, codecSurface, exceptWidth, exceptHeight);
             }
 
             @Override
@@ -58,11 +56,9 @@ public class CameraDevice {
     }
 
     // 接收用户发来的视频参数
-    public void init(int facing, int exceptWidth, int exceptHeight, int windowWidth, int windowHeight, int frameRate, int bitRate, SurfaceHolder displaySurface) {
+    public void init(int facing, int exceptWidth, int exceptHeight, int frameRate, int bitRate, SurfaceHolder displaySurface) {
         this.exceptWidth = exceptWidth;
         this.exceptHeight = exceptHeight;
-        this.windowWidth = windowWidth;
-        this.windowHeight = windowHeight;
         this.frameRate = frameRate;
         this.bitRate = bitRate;
         this.displaySurface = displaySurface;
