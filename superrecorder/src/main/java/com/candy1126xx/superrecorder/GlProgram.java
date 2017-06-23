@@ -17,8 +17,8 @@ public class GlProgram {
     public static final float[] mTextureCoord = new float[]{0.0F, 0.0F, 1.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F};
 
     public GlProgram(String vert, String frag) {
-        int mVertShader = this.loadShader('謱', vert);
-        int mFragShader = this.loadShader('謰', frag);
+        int mVertShader = this.loadShader(GLES20.GL_VERTEX_SHADER, vert);
+        int mFragShader = this.loadShader(GLES20.GL_FRAGMENT_SHADER, frag);
         this.mProgram = GLES20.glCreateProgram();
         GlUtil.checkGlError("glCreateProgram");
         GLES20.glAttachShader(this.mProgram, mVertShader);
@@ -64,15 +64,15 @@ public class GlProgram {
         GlUtil.checkGlError("glGetAttribLocation");
         GlUtil.checkLocation(id, location);
         GLES20.glEnableVertexAttribArray(id);
-        GLES20.glBindBuffer('袒', 0);
-        GLES20.glVertexAttribPointer(id, num, 5126, false, 0, GlUtil.createFloatBuffer(array));
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+        GLES20.glVertexAttribPointer(id, num, GLES20.GL_FLOAT, false, 0, GlUtil.createFloatBuffer(array));
     }
 
     public void setFloat(String location, float fnum) {
         int id = GLES20.glGetUniformLocation(this.mProgram, location);
         GlUtil.checkLocation(id, location);
         GLES20.glEnableVertexAttribArray(id);
-        GLES20.glBindBuffer('袒', 0);
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
         GLES20.glUniform1f(id, fnum);
     }
 
@@ -89,7 +89,7 @@ public class GlProgram {
         GLES20.glCompileShader(shader);
         GlUtil.checkGlError("glCreateShader");
         int[] compiled = new int[1];
-        GLES20.glGetShaderiv(shader, '讁', compiled, 0);
+        GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compiled, 0);
         if(compiled[0] == 0) {
             Log.e(TAG, "Could not compile shader " + shaderType + ":");
             Log.e(TAG, " " + source);

@@ -46,8 +46,8 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener,
         displayEGLSurface = eglWrapper.createWindowSurface(displaySurface);
 //        codecEGLSurface = eglWrapper.createWindowSurface(codecSurface);
         eglWrapper.makeCurrent(tempEGLSurface);
-        mTextureID = OpenGLUtils.createTextureObject(mTextureTarget);
 
+        mTextureID = OpenGLUtils.createTextureObject(mTextureTarget);
         surfaceTexture = new SurfaceTexture(mTextureID);
         surfaceTexture.setOnFrameAvailableListener(this);
 
