@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        device.init(CAMERA_FACING_BACK, exceptWidth, exceptHeight, 3, 1500000, holder);
+        device.init(CAMERA_FACING_BACK, exceptWidth, exceptHeight, holder);
         device.createMission();
     }
 

@@ -3,24 +3,26 @@ package com.candy1126xx.superrecorder;
 import android.app.Application;
 import android.content.res.AssetManager;
 import android.hardware.Camera;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
+import java.io.File;
+import java.io.IOException;
+
 /**
  * Created by Administrator on 2017/6/20 0020.
  */
 
-public class CameraDevice implements CameraManager.CameraManagerCallback {
+public class CameraDevice implements CameraManager.CameraManagerCallback, MediaCodecRecorder.MediaCodecRecorderCallback {
 
     private static CameraDevice cameraDevice;
 
     private int exceptWidth;
     private int exceptHeight;
-    private int frameRate;
-    private int bitRate;
 
     private SurfaceHolder displaySurface;
     private Surface codecSurface;
@@ -28,9 +30,9 @@ public class CameraDevice implements CameraManager.CameraManagerCallback {
     private CameraManager cameraManager;
 
     private MediaCodecRecorder mediaCodec;
+    private AVMuxer muxer;
 
     private HandlerThread cameraThread;
-
     private Handler cameraHandler;
 
     private RecorderMission mission;
@@ -47,17 +49,15 @@ public class CameraDevice implements CameraManager.CameraManagerCallback {
     }
 
     // 接收用户发来的视频参数
-    public void init(int facing, int exceptWidth, int exceptHeight, int frameRate, int bitRate, SurfaceHolder displaySurface) {
+    public void init(int facing, int exceptWidth, int exceptHeight, SurfaceHolder displaySurface) {
         this.exceptWidth = exceptWidth;
         this.exceptHeight = exceptHeight;
-        this.frameRate = frameRate;
-        this.bitRate = bitRate;
         this.displaySurface = displaySurface;
 
         // 创建CameraManager
         cameraManager = new CameraManager();
-        cameraManager.init(facing, exceptWidth, exceptHeight);
         cameraManager.setCallback(this);
+        cameraManager.init(facing, exceptWidth, exceptHeight);
 
         // 创建子线程
         cameraThread = new HandlerThread("Camera" + facing);
@@ -72,14 +72,21 @@ public class CameraDevice implements CameraManager.CameraManagerCallback {
                     case 2:
                         cameraManager.closeCamera();
                         mission.finish();
+                        mediaCodec.close();
+                        muxer.close();
                         break;
                 }
                 return true;
             }
         });
 
+        muxer = new AVMuxer();
+        muxer.init();
+
         // 创建编码器
         mediaCodec = new MediaCodecRecorder();
+        mediaCodec.setMediaCodecRecorderCallback(this);
+        mediaCodec.init(muxer, exceptWidth, exceptHeight);
     }
 
     // 创建图像录制任务，实际是打开摄像头
@@ -90,7 +97,7 @@ public class CameraDevice implements CameraManager.CameraManagerCallback {
     // 打开摄像头后创建任务
     @Override
     public void openCameraSuccess(Camera camera) {
-        mission = new RecorderMission(manager, camera, displaySurface, codecSurface, exceptWidth, exceptHeight);
+        mission = new RecorderMission(manager, camera, displaySurface, mediaCodec, codecSurface, exceptWidth, exceptHeight);
     }
 
     @Override
@@ -100,6 +107,16 @@ public class CameraDevice implements CameraManager.CameraManagerCallback {
 
     @Override
     public void cannotFindCamera() {
+
+    }
+
+    @Override
+    public void onCreateEncoderSuccess(Surface surface) {
+        codecSurface = surface;
+    }
+
+    @Override
+    public void onCreateEncoderFail() {
 
     }
 

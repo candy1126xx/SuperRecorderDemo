@@ -38,13 +38,21 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener,
     private int exceptWidth;
     private int exceptHeight;
 
-    public RecorderMission(AssetManager manager, Camera camera, SurfaceHolder displaySurface, Surface codecSurface, int exceptWidth, int exceptHeight) {
+    private boolean isRunning; // 关闭硬件资源全是异步，为了防止报错，加上这个标志
+
+    private EncoderRenderCallback encoderRenderCallback;
+
+    //------------------------------------以下代码在Camera线程
+
+    public RecorderMission(AssetManager manager, Camera camera, SurfaceHolder displaySurface, EncoderRenderCallback encoderRenderCallback, Surface codecSurface, int exceptWidth, int exceptHeight) {
+        this.isRunning = true;
         this.exceptWidth = exceptWidth;
         this.exceptHeight = exceptHeight;
+        this.encoderRenderCallback = encoderRenderCallback;
         eglWrapper = new EGLWrapper(null, 1);
         tempEGLSurface = eglWrapper.createPbufferSurface(1, 1);
         displayEGLSurface = eglWrapper.createWindowSurface(displaySurface);
-//        codecEGLSurface = eglWrapper.createWindowSurface(codecSurface);
+        if (codecSurface != null) codecEGLSurface = eglWrapper.createWindowSurface(codecSurface);
         eglWrapper.makeCurrent(tempEGLSurface);
 
         mTextureID = OpenGLUtils.createTextureObject(mTextureTarget);
@@ -67,15 +75,22 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener,
 
     @Override
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+        if (!isRunning) return;
+
         surfaceTexture.updateTexImage();
         surfaceTexture.getTransformMatrix(mStMatrix);
+        render.setInputTransform(mStMatrix);
 
         eglWrapper.makeCurrent(displayEGLSurface);
-
-        render.setInputTransform(mStMatrix);
         render.draw();
-
         eglWrapper.swapBuffers(displayEGLSurface);
+
+        if (codecEGLSurface != null) {
+            eglWrapper.makeCurrent(codecEGLSurface);
+            render.draw();
+            eglWrapper.swapBuffers(codecEGLSurface);
+            encoderRenderCallback.onSurfaceRender();
+        }
     }
 
     @Override
@@ -93,21 +108,28 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener,
     }
 
     public void finish() {
+        isRunning = false;
+
+        surfaceTexture.setOnFrameAvailableListener(null);
+        surfaceTexture.release();
+        surfaceTexture = null;
+
+        render.unrealize();
+        render = null;
+
         eglWrapper.releaseSurface(tempEGLSurface);
         eglWrapper.releaseSurface(displayEGLSurface);
         eglWrapper.releaseSurface(codecEGLSurface);
         eglWrapper.release();
         eglWrapper = null;
-
-        render.unrealize();
-        render = null;
-
-        surfaceTexture.release();
-        surfaceTexture = null;
     }
 
     private void calculateViewPort(int sw, int sh, Rect rect) {
         if (rect == null) rect = new Rect();
         rect.set(0, 0, sw, sh);
+    }
+
+    public interface EncoderRenderCallback{
+        void onSurfaceRender();
     }
 }
