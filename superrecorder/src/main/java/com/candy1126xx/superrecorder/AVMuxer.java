@@ -63,9 +63,13 @@ public class AVMuxer {
 
     public void writeVideoSample(ByteBuffer byteBuf, MediaCodec.BufferInfo bufferInfo) {
         if (!writeToFile) return;
-        bufferInfo.presentationTimeUs = System.nanoTime() / 1000L - startTime + recordTime;
-        muxer.writeSampleData(videoTrackerIndex, byteBuf, bufferInfo);
-        frameCount++;
+        if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME ||
+                bufferInfo.flags == MediaCodec.BUFFER_FLAG_CODEC_CONFIG ||
+                frameCount > 0) {
+            bufferInfo.presentationTimeUs = System.nanoTime() / 1000L - startTime + recordTime;
+            muxer.writeSampleData(videoTrackerIndex, byteBuf, bufferInfo);
+            frameCount++;
+        }
     }
 
 }

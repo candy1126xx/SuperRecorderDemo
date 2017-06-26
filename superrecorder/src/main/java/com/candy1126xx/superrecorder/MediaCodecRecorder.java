@@ -3,17 +3,10 @@ package com.candy1126xx.superrecorder;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
-import android.media.MediaMuxer;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Message;
 import android.view.Surface;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.LinkedList;
-import java.util.Queue;
 
 /**
  * Created by Administrator on 2017/6/20 0020.
@@ -87,20 +80,19 @@ public class MediaCodecRecorder implements RecorderMission.EncoderRenderCallback
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                 encoderOutputBuffers = encoder.getOutputBuffers();
             } else if (encoderStatus >= 0) {
-                muxer.writeVideoSample(encoderOutputBuffers[encoderStatus], encoderBufferInfo);
-                encoder.releaseOutputBuffer(encoderStatus, false);
+                if (encoderBufferInfo.flags == MediaCodec.BUFFER_FLAG_END_OF_STREAM) {
+                    encoder.stop();
+                    encoder.release();
+                    encoder = null;
+                } else {
+                    muxer.writeVideoSample(encoderOutputBuffers[encoderStatus], encoderBufferInfo);
+                    encoder.releaseOutputBuffer(encoderStatus, false);
+                }
             }
         }
     }
 
     public void close() {
-        if (encoder != null) {
-            encoder.flush();
-            encoder.signalEndOfInputStream();
-            encoder.stop();
-            encoder.release();
-            encoder = null;
-        }
+        if (encoder != null) encoder.signalEndOfInputStream();
     }
-
 }
