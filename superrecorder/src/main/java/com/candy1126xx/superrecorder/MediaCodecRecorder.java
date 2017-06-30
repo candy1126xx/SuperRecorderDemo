@@ -80,7 +80,7 @@ public class MediaCodecRecorder implements RecorderMission.EncoderRenderCallback
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                 encoderOutputBuffers = encoder.getOutputBuffers();
             } else if (encoderStatus >= 0) {
-                if (encoderBufferInfo.flags == MediaCodec.BUFFER_FLAG_END_OF_STREAM) {
+                if ((encoderBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                     encoder.stop();
                     encoder.release();
                     encoder = null;

@@ -3,23 +3,19 @@ package com.candy1126xx.superrecorder;
 import android.app.Application;
 import android.content.res.AssetManager;
 import android.hardware.Camera;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
-import java.io.File;
-import java.io.IOException;
-
 /**
  * Created by Administrator on 2017/6/20 0020.
  */
 
-public class CameraDevice implements CameraManager.CameraManagerCallback, MediaCodecRecorder.MediaCodecRecorderCallback {
+public class RecordDevice implements CameraManager.CameraManagerCallback, MediaCodecRecorder.MediaCodecRecorderCallback {
 
-    private static CameraDevice cameraDevice;
+    private static RecordDevice cameraDevice;
 
     private int exceptWidth;
     private int exceptHeight;
@@ -39,12 +35,12 @@ public class CameraDevice implements CameraManager.CameraManagerCallback, MediaC
 
     private AssetManager manager;
 
-    private CameraDevice(Application app) {
+    private RecordDevice(Application app) {
         this.manager = app.getAssets();
     }
 
-    public static CameraDevice getInstance(Application app) {
-        if (cameraDevice == null) cameraDevice = new CameraDevice(app);
+    public static RecordDevice getInstance(Application app) {
+        if (cameraDevice == null) cameraDevice = new RecordDevice(app);
         return cameraDevice;
     }
 
