@@ -13,7 +13,9 @@ import android.view.SurfaceHolder;
  * Created by Administrator on 2017/6/20 0020.
  */
 
-public class RecordDevice implements CameraManager.CameraManagerCallback, MediaCodecRecorder.MediaCodecRecorderCallback, AudioManager.AudioManagerCallback {
+public class RecordDevice implements
+        CameraManager.CameraManagerCallback,
+        AudioManager.AudioManagerCallback {
 
     private static RecordDevice cameraDevice;
 
@@ -21,7 +23,6 @@ public class RecordDevice implements CameraManager.CameraManagerCallback, MediaC
     private int exceptHeight;
 
     private SurfaceHolder displaySurface;
-    private Surface codecSurface;
 
     private CameraManager cameraManager;
     private AudioManager audioManager;
@@ -105,7 +106,6 @@ public class RecordDevice implements CameraManager.CameraManagerCallback, MediaC
 
         // 创建编码器
         mediaCodec = new MediaCodecRecorder();
-        mediaCodec.setMediaCodecRecorderCallback(this);
         mediaCodec.init(muxer, exceptWidth, exceptHeight);
 
         audioCodec = new AudioCodecRecorder();
@@ -121,7 +121,7 @@ public class RecordDevice implements CameraManager.CameraManagerCallback, MediaC
     // 打开摄像头后创建任务
     @Override
     public void openCameraSuccess(Camera camera) {
-        recorderMission = new RecorderMission(manager, camera, displaySurface, mediaCodec, codecSurface, exceptWidth, exceptHeight);
+        recorderMission = new RecorderMission(manager, camera, displaySurface, mediaCodec, exceptWidth, exceptHeight);
     }
 
     @Override
@@ -131,16 +131,6 @@ public class RecordDevice implements CameraManager.CameraManagerCallback, MediaC
 
     @Override
     public void cannotFindCamera() {
-
-    }
-
-    @Override
-    public void onCreateEncoderSuccess(Surface surface) {
-        codecSurface = surface;
-    }
-
-    @Override
-    public void onCreateEncoderFail() {
 
     }
 

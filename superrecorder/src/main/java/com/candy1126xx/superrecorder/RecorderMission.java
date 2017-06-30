@@ -40,19 +40,19 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener,
 
     private boolean isRunning; // 关闭硬件资源全是异步，为了防止报错，加上这个标志
 
-    private EncoderRenderCallback encoderRenderCallback;
+    private MediaCodecRecorder mediaCodec;
 
     //------------------------------------以下代码在Camera线程
 
-    public RecorderMission(AssetManager manager, Camera camera, SurfaceHolder displaySurface, EncoderRenderCallback encoderRenderCallback, Surface codecSurface, int exceptWidth, int exceptHeight) {
+    public RecorderMission(AssetManager manager, Camera camera, SurfaceHolder displaySurface, MediaCodecRecorder mediaCodec, int exceptWidth, int exceptHeight) {
         this.isRunning = true;
         this.exceptWidth = exceptWidth;
         this.exceptHeight = exceptHeight;
-        this.encoderRenderCallback = encoderRenderCallback;
+        this.mediaCodec = mediaCodec;
         eglWrapper = new EGLWrapper(null, 1);
         tempEGLSurface = eglWrapper.createPbufferSurface(1, 1);
         displayEGLSurface = eglWrapper.createWindowSurface(displaySurface);
-        if (codecSurface != null) codecEGLSurface = eglWrapper.createWindowSurface(codecSurface);
+        codecEGLSurface = eglWrapper.createWindowSurface(mediaCodec.getInputSurface());
         eglWrapper.makeCurrent(tempEGLSurface);
 
         mTextureID = OpenGLUtils.createTextureObject(mTextureTarget);
@@ -89,7 +89,7 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener,
             eglWrapper.makeCurrent(codecEGLSurface);
             render.draw();
             eglWrapper.swapBuffers(codecEGLSurface);
-            encoderRenderCallback.onSurfaceRender();
+            mediaCodec.onSurfaceRender();
         }
     }
 
@@ -127,9 +127,5 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener,
     private void calculateViewPort(int sw, int sh, Rect rect) {
         if (rect == null) rect = new Rect();
         rect.set(0, 0, sw, sh);
-    }
-
-    public interface EncoderRenderCallback{
-        void onSurfaceRender();
     }
 }

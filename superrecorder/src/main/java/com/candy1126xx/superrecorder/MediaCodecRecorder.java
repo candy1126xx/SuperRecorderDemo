@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
  * Created by Administrator on 2017/6/20 0020.
  */
 
-public class MediaCodecRecorder implements RecorderMission.EncoderRenderCallback {
+public class MediaCodecRecorder {
 
     private MediaFormat colorFormat;
 
@@ -42,11 +42,15 @@ public class MediaCodecRecorder implements RecorderMission.EncoderRenderCallback
             surface = encoder.createInputSurface();
             encoder.start();
             encoderOutputBuffers = encoder.getOutputBuffers();
-            if (callback != null) callback.onCreateEncoderSuccess(surface);
+            if (callback != null) callback.onCreateEncoderSuccess();
         } catch (IOException e) {
             surface = null;
             if (callback != null) callback.onCreateEncoderFail();
         }
+    }
+
+    public Surface getInputSurface() {
+        return surface;
     }
 
     public void setMediaCodecRecorderCallback(MediaCodecRecorderCallback callback) {
@@ -54,7 +58,7 @@ public class MediaCodecRecorder implements RecorderMission.EncoderRenderCallback
     }
 
     public interface MediaCodecRecorderCallback {
-        void onCreateEncoderSuccess(Surface surface);
+        void onCreateEncoderSuccess();
 
         void onCreateEncoderFail();
     }
@@ -62,7 +66,6 @@ public class MediaCodecRecorder implements RecorderMission.EncoderRenderCallback
     //------------------------------------以上代码在主线程
     //------------------------------------以下代码在Camera线程
 
-    @Override
     public void onSurfaceRender() {
         synchronized (this) {
             writeToFile();
