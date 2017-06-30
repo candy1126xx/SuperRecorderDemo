@@ -70,13 +70,13 @@ public class MediaCodecRecorder implements RecorderMission.EncoderRenderCallback
     }
 
     private void writeToFile() {
-        while (true) {
+        while (encoder != null) {
             int encoderStatus = encoder.dequeueOutputBuffer(encoderBufferInfo, 0L);
 
             if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
                 break;
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                muxer.addVideoTrack(encoder.getOutputFormat());
+                muxer.addTrack(encoder.getOutputFormat(), 1);
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                 encoderOutputBuffers = encoder.getOutputBuffers();
             } else if (encoderStatus >= 0) {
@@ -85,7 +85,7 @@ public class MediaCodecRecorder implements RecorderMission.EncoderRenderCallback
                     encoder.release();
                     encoder = null;
                 } else {
-                    muxer.writeVideoSample(encoderOutputBuffers[encoderStatus], encoderBufferInfo);
+                    muxer.writeSample(encoderOutputBuffers[encoderStatus], encoderBufferInfo, 1);
                     encoder.releaseOutputBuffer(encoderStatus, false);
                 }
             }

@@ -35,8 +35,7 @@ public class AudioCodecRecorder {
         audioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
         audioFormat.setInteger(MediaFormat.KEY_CHANNEL_MASK, AudioFormat.CHANNEL_IN_MONO);
         audioFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 1);
-        audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, 96000);
-        audioFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 100 * 1024);
+        audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, 64000);
 
         try {
             encoder = MediaCodec.createEncoderByType("audio/mp4a-latm");
@@ -57,7 +56,7 @@ public class AudioCodecRecorder {
             ByteBuffer inputBuffer = encoderInputBuffers[inputBufferIndex];
             inputBuffer.clear();
             inputBuffer.put(buffer);
-            encoder.queueInputBuffer(inputBufferIndex, 0, inputBuffer.limit(), System.nanoTime() / 1000L - startTime, 0);
+            encoder.queueInputBuffer(inputBufferIndex, 0, buffer.limit(), System.nanoTime() / 1000L - startTime, 0);
 
             while (encoder != null) {
                 int encoderStatus = encoder.dequeueOutputBuffer(bufferInfo, 0);
@@ -65,7 +64,7 @@ public class AudioCodecRecorder {
                 if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
                     break;
                 } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-//                    muxer.addTrack(encoder.getOutputFormat(), 2);
+                    muxer.addTrack(encoder.getOutputFormat(), 2);
                 } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                     encoderOutputBuffers = encoder.getOutputBuffers();
                 } else if (encoderStatus >= 0) {
@@ -74,7 +73,7 @@ public class AudioCodecRecorder {
                         encoder.release();
                         encoder = null;
                     } else {
-//                        muxer.writeSample(encoderOutputBuffers[encoderStatus], bufferInfo, 2);
+                        muxer.writeSample(encoderOutputBuffers[encoderStatus], bufferInfo, 2);
                         encoder.releaseOutputBuffer(encoderStatus, false);
                     }
                 }

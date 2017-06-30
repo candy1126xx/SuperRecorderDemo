@@ -13,7 +13,7 @@ import android.view.SurfaceHolder;
  * Created by Administrator on 2017/6/20 0020.
  */
 
-public class RecordDevice implements CameraManager.CameraManagerCallback, MediaCodecRecorder.MediaCodecRecorderCallback {
+public class RecordDevice implements CameraManager.CameraManagerCallback, MediaCodecRecorder.MediaCodecRecorderCallback, AudioManager.AudioManagerCallback {
 
     private static RecordDevice cameraDevice;
 
@@ -24,14 +24,18 @@ public class RecordDevice implements CameraManager.CameraManagerCallback, MediaC
     private Surface codecSurface;
 
     private CameraManager cameraManager;
-
+    private AudioManager audioManager;
+    private AudioCodecRecorder audioCodec;
     private MediaCodecRecorder mediaCodec;
     private AVMuxer muxer;
 
     private HandlerThread cameraThread;
     private Handler cameraHandler;
+    private HandlerThread audioThread;
+    private Handler audioHandler;
 
-    private RecorderMission mission;
+    private RecorderMission recorderMission;
+    private AudioMission audioMission;
 
     private AssetManager manager;
 
@@ -51,9 +55,11 @@ public class RecordDevice implements CameraManager.CameraManagerCallback, MediaC
         this.displaySurface = displaySurface;
 
         // 创建CameraManager
-        cameraManager = new CameraManager();
+        cameraManager = new CameraManager(facing, exceptWidth, exceptHeight);
         cameraManager.setCallback(this);
-        cameraManager.init(facing, exceptWidth, exceptHeight);
+
+        audioManager = new AudioManager();
+        audioManager.setCallback(this);
 
         // 创建子线程
         cameraThread = new HandlerThread("Camera" + facing);
@@ -67,9 +73,27 @@ public class RecordDevice implements CameraManager.CameraManagerCallback, MediaC
                         break;
                     case 2:
                         cameraManager.closeCamera();
-                        mission.finish();
+                        recorderMission.finish();
                         mediaCodec.close();
-                        muxer.close();
+                        break;
+                }
+                return true;
+            }
+        });
+
+        audioThread = new HandlerThread("Mic");
+        audioThread.start();
+        audioHandler = new Handler(audioThread.getLooper(), new Handler.Callback() {
+            @Override
+            public boolean handleMessage(Message msg) {
+                switch (msg.what) {
+                    case 1:
+                        audioManager.openMic();
+                        break;
+                    case 2:
+                        audioManager.closeMic();
+                        audioMission.finish();
+                        audioCodec.close();
                         break;
                 }
                 return true;
@@ -83,17 +107,21 @@ public class RecordDevice implements CameraManager.CameraManagerCallback, MediaC
         mediaCodec = new MediaCodecRecorder();
         mediaCodec.setMediaCodecRecorderCallback(this);
         mediaCodec.init(muxer, exceptWidth, exceptHeight);
+
+        audioCodec = new AudioCodecRecorder();
+        audioCodec.init(muxer);
     }
 
     // 创建图像录制任务，实际是打开摄像头
     public void createMission() {
         cameraHandler.obtainMessage(1).sendToTarget();
+        audioHandler.obtainMessage(1).sendToTarget();
     }
 
     // 打开摄像头后创建任务
     @Override
     public void openCameraSuccess(Camera camera) {
-        mission = new RecorderMission(manager, camera, displaySurface, mediaCodec, codecSurface, exceptWidth, exceptHeight);
+        recorderMission = new RecorderMission(manager, camera, displaySurface, mediaCodec, codecSurface, exceptWidth, exceptHeight);
     }
 
     @Override
@@ -124,5 +152,17 @@ public class RecordDevice implements CameraManager.CameraManagerCallback, MediaC
     // 结束任务
     public void finishMission() {
         cameraHandler.obtainMessage(2).sendToTarget();
+        audioHandler.obtainMessage(2).sendToTarget();
+        muxer.stop();
+    }
+
+    @Override
+    public void onOpenMicSuccess() {
+        audioMission = new AudioMission(audioManager, audioCodec, muxer);
+    }
+
+    @Override
+    public void onOpenMicFail() {
+
     }
 }

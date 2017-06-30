@@ -37,7 +37,7 @@ public class AudioMission {
                 this.buffer.position(this.read);
                 this.buffer.flip();
 
-//                this.audioCodec.encode(this.buffer);
+                this.audioCodec.encode(this.buffer);
             }
         }
     }

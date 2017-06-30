@@ -36,7 +36,7 @@ public class CameraManager {
 
     private Camera.Size previewSize;
 
-    public CameraManager() {
+    public CameraManager(int facing, int exceptWidth, int exceptHeight) {
         cameraCount = Camera.getNumberOfCameras();
         infos = new Camera.CameraInfo[cameraCount];
         for (int i = 0; i < cameraCount; i++) {
@@ -44,9 +44,6 @@ public class CameraManager {
             Camera.getCameraInfo(i, info);
             infos[i] = info;
         }
-    }
-
-    public void init(int facing, int exceptWidth, int exceptHeight) {
         this.exceptWidth = exceptWidth;
         this.exceptHeight = exceptHeight;
         this.currentID = findCameraID(facing);

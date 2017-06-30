@@ -17,14 +17,15 @@ public class AVMuxer {
 
     private MediaMuxer muxer;
     private File outputFile;
-    private int videoTrackerIndex;
+    private int videoTrackerIndex = -1;
+    private int audioTrackerIndex = -1;
 
     private boolean writeToFile;
 
     private long startTime;
-    private long recordTime;
 
-    private int frameCount;
+    private int videoFrameCount;
+    private int audioFrameCount;
 
     public void init() {
         try {
@@ -40,35 +41,47 @@ public class AVMuxer {
     //------------------------------------以上代码在主线程
     //------------------------------------以下代码在Camera线程
 
-    public void start(long startTime) {
-        this.startTime = startTime;
+    public void start() {
+        this.startTime = System.nanoTime() / 1000L;
         this.writeToFile = true;
     }
 
     public void stop() {
-        this.recordTime += System.nanoTime() / 1000L - startTime;
-        this.writeToFile = false;
-    }
-
-    public void close() {
+        writeToFile = false;
         muxer.stop();
         muxer.release();
     }
 
-    public void addVideoTrack(MediaFormat format) {
-        videoTrackerIndex = muxer.addTrack(format);
-        muxer.start();
-        start(System.nanoTime() / 1000L);
+    public synchronized void addTrack(MediaFormat format, int type) {
+        switch (type) {
+            case 1:
+                videoTrackerIndex = muxer.addTrack(format);
+                break;
+            case 2:
+                audioTrackerIndex = muxer.addTrack(format);
+                break;
+        }
+        if (videoTrackerIndex != -1 && audioTrackerIndex != -1) {
+            muxer.start();
+            start();
+        }
     }
 
-    public void writeVideoSample(ByteBuffer byteBuf, MediaCodec.BufferInfo bufferInfo) {
+    public synchronized void writeSample(ByteBuffer byteBuf, MediaCodec.BufferInfo bufferInfo, int type) {
         if (!writeToFile) return;
-        if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0 ||
-                (bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0 ||
-                frameCount > 0) {
-            bufferInfo.presentationTimeUs = System.nanoTime() / 1000L - startTime + recordTime;
-            muxer.writeSampleData(videoTrackerIndex, byteBuf, bufferInfo);
-            frameCount++;
+        switch (type) {
+            case 1:
+                if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0 || videoFrameCount > 0) {
+                    bufferInfo.presentationTimeUs = System.nanoTime() / 1000L - startTime;
+                    muxer.writeSampleData(videoTrackerIndex, byteBuf, bufferInfo);
+                    videoFrameCount++;
+                }
+                break;
+            case 2:
+                bufferInfo.presentationTimeUs = System.nanoTime() / 1000L - startTime;
+                muxer.writeSampleData(audioTrackerIndex, byteBuf, bufferInfo);
+                audioFrameCount++;
+                break;
         }
     }
 
