@@ -55,13 +55,12 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
     @Override
     public void onClick(View v) {
-        if (btn.getText().toString().equals("开始")){
+        if (btn.getText().toString().equals("开始")) {
             btn.setText("停止");
-//            device.startWriteToFile();
-        }else {
-            btn.setText("完成");
-            btn.setEnabled(false);
-//            device.stopWriteToFile();
+            device.startWriteToFile();
+        } else {
+            btn.setText("开始");
+            device.stopWriteToFile();
         }
     }
 }

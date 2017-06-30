@@ -16,7 +16,6 @@ import java.nio.ByteBuffer;
 public class AVMuxer {
 
     private MediaMuxer muxer;
-    private File outputFile;
     private int videoTrackerIndex = -1;
     private int audioTrackerIndex = -1;
 
@@ -27,9 +26,8 @@ public class AVMuxer {
     private int videoFrameCount;
     private int audioFrameCount;
 
-    public void init() {
+    public AVMuxer(File outputFile) {
         try {
-            outputFile = new File(Environment.getExternalStorageDirectory() + File.separator + "demo.mp4");
             if (outputFile.exists()) outputFile.delete();
             outputFile.createNewFile();
             muxer = new MediaMuxer(outputFile.getPath(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);

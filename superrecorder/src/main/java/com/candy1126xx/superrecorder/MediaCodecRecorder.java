@@ -16,18 +16,18 @@ public class MediaCodecRecorder {
 
     private MediaFormat colorFormat;
 
+    private volatile MediaFormat outputFormat;
+
     private MediaCodec encoder;
     private Surface surface;
     private MediaCodec.BufferInfo encoderBufferInfo = new MediaCodec.BufferInfo();
     private ByteBuffer[] encoderOutputBuffers;
 
-    private AVMuxer muxer;
+    private volatile AVMuxer muxer;
 
     private MediaCodecRecorderCallback callback;
 
-    public void init(AVMuxer muxer, int exceptWidth, int exceptHeight) {
-        this.muxer = muxer;
-
+    public void init(int exceptWidth, int exceptHeight) {
         colorFormat = MediaFormat.createVideoFormat("video/avc", exceptWidth, exceptHeight);
         colorFormat.setInteger(MediaFormat.KEY_WIDTH, exceptWidth);
         colorFormat.setInteger(MediaFormat.KEY_HEIGHT, exceptHeight);
@@ -79,7 +79,7 @@ public class MediaCodecRecorder {
             if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
                 break;
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                muxer.addTrack(encoder.getOutputFormat(), 1);
+                outputFormat = encoder.getOutputFormat();
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                 encoderOutputBuffers = encoder.getOutputBuffers();
             } else if (encoderStatus >= 0) {
@@ -88,7 +88,7 @@ public class MediaCodecRecorder {
                     encoder.release();
                     encoder = null;
                 } else {
-                    muxer.writeSample(encoderOutputBuffers[encoderStatus], encoderBufferInfo, 1);
+                    if (muxer != null) muxer.writeSample(encoderOutputBuffers[encoderStatus], encoderBufferInfo, 1);
                     encoder.releaseOutputBuffer(encoderStatus, false);
                 }
             }
@@ -97,5 +97,16 @@ public class MediaCodecRecorder {
 
     public void close() {
         if (encoder != null) encoder.signalEndOfInputStream();
+    }
+
+    //------------------------------------以下代码在Project线程
+
+    public void installMuxer(AVMuxer muxer) {
+        muxer.addTrack(outputFormat, 1);
+        this.muxer = muxer;
+    }
+
+    public void uninstallMuxer(){
+        this.muxer = null;
     }
 }

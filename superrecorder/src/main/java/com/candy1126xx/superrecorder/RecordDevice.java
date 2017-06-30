@@ -6,7 +6,6 @@ import android.hardware.Camera;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
-import android.view.Surface;
 import android.view.SurfaceHolder;
 
 /**
@@ -15,7 +14,8 @@ import android.view.SurfaceHolder;
 
 public class RecordDevice implements
         CameraManager.CameraManagerCallback,
-        AudioManager.AudioManagerCallback {
+        AudioManager.AudioManagerCallback,
+        ProjectManager.ProjectManagerCallback {
 
     private static RecordDevice cameraDevice;
 
@@ -26,14 +26,16 @@ public class RecordDevice implements
 
     private CameraManager cameraManager;
     private AudioManager audioManager;
+    private ProjectManager projectManager;
     private AudioCodecRecorder audioCodec;
     private MediaCodecRecorder mediaCodec;
-    private AVMuxer muxer;
 
     private HandlerThread cameraThread;
     private Handler cameraHandler;
     private HandlerThread audioThread;
     private Handler audioHandler;
+    private HandlerThread projectThread;
+    private Handler projectHandler;
 
     private RecorderMission recorderMission;
     private AudioMission audioMission;
@@ -61,6 +63,9 @@ public class RecordDevice implements
 
         audioManager = new AudioManager();
         audioManager.setCallback(this);
+
+        projectManager = new ProjectManager();
+        projectManager.setCallback(this);
 
         // 创建子线程
         cameraThread = new HandlerThread("Camera" + facing);
@@ -101,21 +106,51 @@ public class RecordDevice implements
             }
         });
 
-        muxer = new AVMuxer();
-        muxer.init();
+        projectThread = new HandlerThread("Project");
+        projectThread.start();
+        projectHandler = new Handler(projectThread.getLooper(), new Handler.Callback() {
+            @Override
+            public boolean handleMessage(Message msg) {
+                switch (msg.what) {
+                    case 1:
+                        projectManager.createNewClip();
+                        break;
+                    case 2:
+                        projectManager.stopCurrentClip();
+                        break;
+                }
+                return true;
+            }
+        });
 
         // 创建编码器
         mediaCodec = new MediaCodecRecorder();
-        mediaCodec.init(muxer, exceptWidth, exceptHeight);
+        mediaCodec.init(exceptWidth, exceptHeight);
 
         audioCodec = new AudioCodecRecorder();
-        audioCodec.init(muxer);
+        audioCodec.init();
     }
 
     // 创建图像录制任务，实际是打开摄像头
     public void createMission() {
         cameraHandler.obtainMessage(1).sendToTarget();
         audioHandler.obtainMessage(1).sendToTarget();
+    }
+
+    // 结束任务
+    public void finishMission() {
+        cameraHandler.obtainMessage(2).sendToTarget();
+        audioHandler.obtainMessage(2).sendToTarget();
+    }
+
+    // 开始写入文件
+    public void startWriteToFile() {
+        projectHandler.obtainMessage(1).sendToTarget();
+    }
+
+    // 结束写入文件
+    public void stopWriteToFile() {
+        projectHandler.obtainMessage(2).sendToTarget();
     }
 
     // 打开摄像头后创建任务
@@ -134,25 +169,25 @@ public class RecordDevice implements
 
     }
 
-    // 是否输出到编码器
-    public void writeToFile(boolean b) {
-
-    }
-
-    // 结束任务
-    public void finishMission() {
-        cameraHandler.obtainMessage(2).sendToTarget();
-        audioHandler.obtainMessage(2).sendToTarget();
-        muxer.stop();
-    }
-
     @Override
     public void onOpenMicSuccess() {
-        audioMission = new AudioMission(audioManager, audioCodec, muxer);
+        audioMission = new AudioMission(audioManager, audioCodec);
     }
 
     @Override
     public void onOpenMicFail() {
 
+    }
+
+    @Override
+    public void onNewClipCreated() {
+        mediaCodec.installMuxer(projectManager.getCurrentMuxer());
+        audioCodec.installMuxer(projectManager.getCurrentMuxer());
+    }
+
+    @Override
+    public void onCurrentClipStop() {
+        mediaCodec.uninstallMuxer();
+        audioCodec.uninstallMuxer();
     }
 }

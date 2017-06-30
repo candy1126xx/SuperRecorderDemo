@@ -12,18 +12,15 @@ public class AudioMission {
 
     private AudioCodecRecorder audioCodec;
 
-    private AVMuxer muxer;
-
     private ByteBuffer buffer;
 
     private int read;
 
     private boolean isRunning;
 
-    public AudioMission(AudioManager audioManager, AudioCodecRecorder audioCodec, AVMuxer muxer) {
+    public AudioMission(AudioManager audioManager, AudioCodecRecorder audioCodec) {
         this.audioManager = audioManager;
         this.audioCodec = audioCodec;
-        this.muxer = muxer;
         this.buffer = ByteBuffer.allocateDirect(this.audioManager.getBufferSizeInBytes());
 
         this.audioManager.getAudioRecord().startRecording();

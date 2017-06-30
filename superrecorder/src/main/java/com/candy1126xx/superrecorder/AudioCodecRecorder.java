@@ -14,11 +14,13 @@ import java.nio.ByteBuffer;
 
 public class AudioCodecRecorder {
 
-    private AVMuxer muxer;
+    private volatile AVMuxer muxer;
 
     private MediaFormat audioFormat;
 
     private MediaCodec encoder;
+
+    private volatile MediaFormat outputFormat;
 
     private ByteBuffer[] encoderInputBuffers;
     private ByteBuffer[] encoderOutputBuffers;
@@ -28,9 +30,7 @@ public class AudioCodecRecorder {
 
     private AudioCodecRecorderCallback callback;
 
-    public void init(AVMuxer muxer) {
-        this.muxer = muxer;
-
+    public void init() {
         audioFormat = MediaFormat.createAudioFormat("audio/mp4a-latm", 44100, 1);
         audioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
         audioFormat.setInteger(MediaFormat.KEY_CHANNEL_MASK, AudioFormat.CHANNEL_IN_MONO);
@@ -64,7 +64,7 @@ public class AudioCodecRecorder {
                 if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
                     break;
                 } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                    muxer.addTrack(encoder.getOutputFormat(), 2);
+                    outputFormat = encoder.getOutputFormat();
                 } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                     encoderOutputBuffers = encoder.getOutputBuffers();
                 } else if (encoderStatus >= 0) {
@@ -73,7 +73,7 @@ public class AudioCodecRecorder {
                         encoder.release();
                         encoder = null;
                     } else {
-                        muxer.writeSample(encoderOutputBuffers[encoderStatus], bufferInfo, 2);
+                        if (muxer != null) muxer.writeSample(encoderOutputBuffers[encoderStatus], bufferInfo, 2);
                         encoder.releaseOutputBuffer(encoderStatus, false);
                     }
                 }
@@ -89,6 +89,17 @@ public class AudioCodecRecorder {
         void onCreateEncoderSuccess();
 
         void onCreateEncoderFail();
+    }
+
+    //------------------------------------以下代码在Project线程
+
+    public void installMuxer(AVMuxer muxer) {
+        muxer.addTrack(outputFormat, 2);
+        this.muxer = muxer;
+    }
+
+    public void uninstallMuxer(){
+        this.muxer = null;
     }
 
 }
