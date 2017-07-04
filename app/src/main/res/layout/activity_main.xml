@@ -20,4 +20,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="合并"/>
+
+    <Button
+        android:id="@+id/btn_delete"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="删除当前段"/>
 </LinearLayout>

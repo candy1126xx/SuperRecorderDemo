@@ -46,7 +46,6 @@ public class AVMuxer {
 
     public void stop() {
         writeToFile = false;
-        muxer.stop();
         muxer.release();
     }
 

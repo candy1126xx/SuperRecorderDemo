@@ -4,6 +4,7 @@ import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.os.Environment;
+import android.text.TextUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,6 +49,8 @@ public class ProjectManager {
 
     private String tempPath = rootPath + File.separator + "demo";
 
+    private String currentPath;
+
     private String resultPath = rootPath + File.separator + "output.mp4";
 
     private ProjectManagerCallback callback;
@@ -62,13 +65,22 @@ public class ProjectManager {
 
     public void createNewClip() {
         index++;
-        currentMuxer = new AVMuxer(new File(tempPath + File.separator + "demo" + index + ".mp4"));
+        currentPath = tempPath + File.separator + "demo" + index + ".mp4";
+        currentMuxer = new AVMuxer(new File(currentPath));
         if (callback != null) callback.onNewClipCreated();
     }
 
     public void stopCurrentClip() {
         currentMuxer.stop();
         if (callback != null) callback.onCurrentClipStop();
+    }
+
+    public void deleteCurrentClip() {
+        if (TextUtils.isEmpty(currentPath)) return;
+        File currentClip = new File(currentPath);
+        if (currentClip.exists() && currentClip.delete()) {
+            if (callback != null) callback.onCurrentClipDelete();
+        }
     }
 
     public void mergeAllClips() {
@@ -103,6 +115,7 @@ public class ProjectManager {
 
             for (int i = 0; i < numTracks; i++) {
                 currentExtractor.selectTrack(i);
+                currentExtractor.seekTo(0, MediaExtractor.SEEK_TO_NEXT_SYNC);
                 MediaFormat format = currentExtractor.getTrackFormat(i);
                 int maxInputSize = format.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE);
                 inputBuffer = ByteBuffer.allocate(maxInputSize);
@@ -155,6 +168,8 @@ public class ProjectManager {
         void onNewClipCreated();
 
         void onCurrentClipStop();
+
+        void onCurrentClipDelete();
 
         void onAllClipsMerged();
     }

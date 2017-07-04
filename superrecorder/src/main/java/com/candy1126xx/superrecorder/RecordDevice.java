@@ -121,6 +121,9 @@ public class RecordDevice implements
                     case 3:
                         projectManager.mergeAllClips();
                         break;
+                    case 4:
+                        projectManager.deleteCurrentClip();
+                        break;
                 }
                 return true;
             }
@@ -159,6 +162,11 @@ public class RecordDevice implements
     // 开始合成文件
     public void startMerge() {
         projectHandler.obtainMessage(3).sendToTarget();
+    }
+
+    // 删除当前片段
+    public void deleteCurrentClip() {
+        projectHandler.obtainMessage(4).sendToTarget();
     }
 
     //--------------------------------------Camera线程
@@ -202,6 +210,11 @@ public class RecordDevice implements
     public void onCurrentClipStop() {
         mediaCodec.uninstallMuxer();
         audioCodec.uninstallMuxer();
+    }
+
+    @Override
+    public void onCurrentClipDelete() {
+
     }
 
     @Override

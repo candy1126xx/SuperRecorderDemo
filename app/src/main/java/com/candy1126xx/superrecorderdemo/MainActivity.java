@@ -19,6 +19,8 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
     private Button btnMerge;
 
+    private Button btnDelete;
+
     private RecordDevice device;
 
     private int exceptWidth = 480;
@@ -31,12 +33,14 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         surfaceView = (SurfaceView) findViewById(R.id.surface_view);
         btn = (Button) findViewById(R.id.btn);
         btnMerge = (Button) findViewById(R.id.btn_merge);
+        btnDelete = (Button) findViewById(R.id.btn_delete);
 
         surfaceView.getHolder().setFixedSize(exceptWidth, exceptHeight);
         surfaceView.getHolder().addCallback(this);
 
         btn.setOnClickListener(this);
         btnMerge.setOnClickListener(this);
+        btnDelete.setOnClickListener(this);
 
         device = RecordDevice.getInstance(getApplication());
     }
@@ -72,6 +76,10 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
             case R.id.btn_merge:
                 device.startMerge();
+                break;
+
+            case R.id.btn_delete:
+                device.deleteCurrentClip();
                 break;
         }
     }
