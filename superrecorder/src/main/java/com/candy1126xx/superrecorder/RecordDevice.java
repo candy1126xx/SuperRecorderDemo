@@ -118,6 +118,9 @@ public class RecordDevice implements
                     case 2:
                         projectManager.stopCurrentClip();
                         break;
+                    case 3:
+                        projectManager.mergeAllClips();
+                        break;
                 }
                 return true;
             }
@@ -153,6 +156,12 @@ public class RecordDevice implements
         projectHandler.obtainMessage(2).sendToTarget();
     }
 
+    // 开始合成文件
+    public void startMerge() {
+        projectHandler.obtainMessage(3).sendToTarget();
+    }
+
+    //--------------------------------------Camera线程
     // 打开摄像头后创建任务
     @Override
     public void openCameraSuccess(Camera camera) {
@@ -168,7 +177,9 @@ public class RecordDevice implements
     public void cannotFindCamera() {
 
     }
+    //--------------------------------------Camera线程
 
+    //--------------------------------------Mic线程
     @Override
     public void onOpenMicSuccess() {
         audioMission = new AudioMission(audioManager, audioCodec);
@@ -178,7 +189,9 @@ public class RecordDevice implements
     public void onOpenMicFail() {
 
     }
+    //--------------------------------------Mic线程
 
+    //--------------------------------------Project线程
     @Override
     public void onNewClipCreated() {
         mediaCodec.installMuxer(projectManager.getCurrentMuxer());
@@ -190,4 +203,10 @@ public class RecordDevice implements
         mediaCodec.uninstallMuxer();
         audioCodec.uninstallMuxer();
     }
+
+    @Override
+    public void onAllClipsMerged() {
+        System.out.println("合并完成");
+    }
+    //--------------------------------------Project线程
 }

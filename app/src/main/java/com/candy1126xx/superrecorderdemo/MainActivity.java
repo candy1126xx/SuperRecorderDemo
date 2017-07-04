@@ -17,6 +17,8 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
     private Button btn;
 
+    private Button btnMerge;
+
     private RecordDevice device;
 
     private int exceptWidth = 480;
@@ -28,11 +30,13 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         setContentView(R.layout.activity_main);
         surfaceView = (SurfaceView) findViewById(R.id.surface_view);
         btn = (Button) findViewById(R.id.btn);
+        btnMerge = (Button) findViewById(R.id.btn_merge);
 
         surfaceView.getHolder().setFixedSize(exceptWidth, exceptHeight);
         surfaceView.getHolder().addCallback(this);
 
         btn.setOnClickListener(this);
+        btnMerge.setOnClickListener(this);
 
         device = RecordDevice.getInstance(getApplication());
     }
@@ -55,12 +59,20 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
     @Override
     public void onClick(View v) {
-        if (btn.getText().toString().equals("开始")) {
-            btn.setText("停止");
-            device.startWriteToFile();
-        } else {
-            btn.setText("开始");
-            device.stopWriteToFile();
+        switch (v.getId()){
+            case R.id.btn:
+                if (btn.getText().toString().equals("开始")) {
+                    btn.setText("停止");
+                    device.startWriteToFile();
+                } else {
+                    btn.setText("开始");
+                    device.stopWriteToFile();
+                }
+                break;
+
+            case R.id.btn_merge:
+                device.startMerge();
+                break;
         }
     }
 }
