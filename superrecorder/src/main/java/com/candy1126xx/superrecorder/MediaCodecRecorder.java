@@ -25,7 +25,7 @@ public class MediaCodecRecorder {
     private ByteBuffer[] encoderOutputBuffers;
     private ByteBuffer configBuffer;
 
-    private volatile AVMuxer muxer;
+    private volatile ClipMuxer muxer;
 
     private MediaCodecRecorderCallback callback;
 
@@ -108,7 +108,7 @@ public class MediaCodecRecorder {
 
     //------------------------------------以下代码在Project线程
 
-    public void installMuxer(AVMuxer muxer) {
+    public void installMuxer(ClipMuxer muxer) {
         muxer.configVideo(configBuffer, configBufferInfo);
         muxer.addTrack(outputFormat, 1);
         this.muxer = muxer;

@@ -10,11 +10,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import static android.media.MediaCodec.BUFFER_FLAG_CODEC_CONFIG;
-import static android.media.MediaCodec.BUFFER_FLAG_END_OF_STREAM;
-import static android.media.MediaCodec.BUFFER_FLAG_KEY_FRAME;
-import static android.media.MediaCodec.BUFFER_FLAG_SYNC_FRAME;
-
 /**
  * Created by Administrator on 2017/6/30 0030.
  */
@@ -22,7 +17,7 @@ import static android.media.MediaCodec.BUFFER_FLAG_SYNC_FRAME;
 public class ProjectManager {
 
     //---------------------------------生成Clip
-    private AVMuxer currentMuxer;
+    private ClipMuxer currentMuxer;
 
     private int index;
     //---------------------------------生成Clip
@@ -66,7 +61,7 @@ public class ProjectManager {
     public void createNewClip() {
         index++;
         currentPath = tempPath + File.separator + "demo" + index + ".mp4";
-        currentMuxer = new AVMuxer(new File(currentPath));
+        currentMuxer = new ClipMuxer(new File(currentPath));
         if (callback != null) callback.onNewClipCreated();
     }
 
@@ -156,7 +151,7 @@ public class ProjectManager {
 
     }
 
-    public AVMuxer getCurrentMuxer() {
+    public ClipMuxer getCurrentMuxer() {
         return currentMuxer;
     }
 

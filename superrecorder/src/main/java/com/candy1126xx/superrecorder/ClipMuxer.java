@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
  * Created by Administrator on 2017/6/23 0023.
  */
 
-public class AVMuxer {
+public class ClipMuxer {
 
     private volatile MediaMuxer muxer;
     private volatile int videoTrackerIndex = -1;
@@ -32,7 +32,7 @@ public class AVMuxer {
     private final static Object lock = new Object();
 
     //------------------------------------Project线程
-    public AVMuxer(File outputFile) {
+    public ClipMuxer(File outputFile) {
         synchronized (lock) {
             try {
                 if (outputFile.exists()) outputFile.delete();

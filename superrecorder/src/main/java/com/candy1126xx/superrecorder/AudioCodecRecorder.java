@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
 
 public class AudioCodecRecorder {
 
-    private volatile AVMuxer muxer;
+    private volatile ClipMuxer muxer;
 
     private MediaFormat audioFormat;
 
@@ -100,7 +100,7 @@ public class AudioCodecRecorder {
 
     //------------------------------------以下代码在Project线程
 
-    public void installMuxer(AVMuxer muxer) {
+    public void installMuxer(ClipMuxer muxer) {
         muxer.configAudio(configBuffer, configBufferInfo);
         muxer.addTrack(outputFormat, 2);
         this.muxer = muxer;
