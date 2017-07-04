@@ -33,8 +33,8 @@ public class MediaCodecRecorder {
         colorFormat.setInteger(MediaFormat.KEY_HEIGHT, exceptHeight);
         colorFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
         colorFormat.setInteger(MediaFormat.KEY_BIT_RATE, 1500000);
-        colorFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
-        colorFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+        colorFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 25);
+        colorFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 5);
 
         try {
             encoder = MediaCodec.createEncoderByType("video/avc");
