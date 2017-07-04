@@ -92,7 +92,7 @@ public class MediaCodecRecorder {
                 } else if ((encoderBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0){
                     configBuffer = ByteBuffer.allocate(encoderOutputBuffers[encoderStatus].capacity());
                     configBuffer.put(encoderOutputBuffers[encoderStatus]);
-                    configBufferInfo.set(encoderBufferInfo.offset, encoderBufferInfo.size, encoderBufferInfo.presentationTimeUs, encoderBufferInfo.flags);
+                    configBufferInfo.set(encoderBufferInfo.offset, encoderBufferInfo.size, 0L, encoderBufferInfo.flags);
                     encoder.releaseOutputBuffer(encoderStatus, false);
                 }else {
                     if (muxer != null) muxer.writeSample(encoderOutputBuffers[encoderStatus], encoderBufferInfo, 1);

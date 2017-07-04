@@ -18,8 +18,6 @@ public class MergeMuxer {
     private int videoTrackerIndex = -1;
     private int audioTrackerIndex = -1;
 
-    private boolean writeToFile;
-
     private int videoFrameCount;
 
     private boolean muxerStarted;
@@ -29,15 +27,12 @@ public class MergeMuxer {
             if (outputFile.exists()) outputFile.delete();
             outputFile.createNewFile();
             muxer = new MediaMuxer(outputFile.getPath(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-            writeToFile = true;
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public void stop() {
-        writeToFile = false;
-        muxer.stop();
         muxer.release();
     }
 
@@ -57,25 +52,14 @@ public class MergeMuxer {
     }
 
     public void writeSample(ByteBuffer byteBuf, MediaCodec.BufferInfo bufferInfo, int type) {
-        if (!writeToFile) return;
         switch (type) {
             case 1:
-                if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0 && videoFrameCount == 0) {
-                    // 这是接收到的第一个关键帧
-                    muxer.writeSampleData(videoTrackerIndex, byteBuf, bufferInfo);
-                    videoFrameCount = 1;
-                } else if (videoFrameCount > 0){
-                    // 第一个关键帧之后的帧
-                    muxer.writeSampleData(videoTrackerIndex, byteBuf, bufferInfo);
-                    videoFrameCount++;
-                } else {
-                    // 第一个关键帧之前的帧
-                }
+                muxer.writeSampleData(videoTrackerIndex, byteBuf, bufferInfo);
+                videoFrameCount++;
                 break;
             case 2:
-                if (videoFrameCount > 0) {
+                if (videoFrameCount > 0)
                     muxer.writeSampleData(audioTrackerIndex, byteBuf, bufferInfo);
-                }
                 break;
         }
     }

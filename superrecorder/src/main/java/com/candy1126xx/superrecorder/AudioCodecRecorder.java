@@ -77,7 +77,7 @@ public class AudioCodecRecorder {
                     } else if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0){
                         configBuffer = ByteBuffer.allocate(encoderOutputBuffers[encoderStatus].capacity());
                         configBuffer.put(encoderOutputBuffers[encoderStatus]);
-                        configBufferInfo.set(bufferInfo.offset, bufferInfo.size, bufferInfo.presentationTimeUs, bufferInfo.flags);
+                        configBufferInfo.set(bufferInfo.offset, bufferInfo.size, 0L, bufferInfo.flags);
                         encoder.releaseOutputBuffer(encoderStatus, false);
                     }else {
                         if (muxer != null) muxer.writeSample(encoderOutputBuffers[encoderStatus], bufferInfo, 2);

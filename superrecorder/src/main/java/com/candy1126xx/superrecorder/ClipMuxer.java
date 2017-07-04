@@ -52,13 +52,17 @@ public class ClipMuxer {
     }
 
     public void configVideo(ByteBuffer byteBuffer, MediaCodec.BufferInfo bufferInfo) {
-        videoConfigBuffer = byteBuffer;
-        videoBufferInfo = bufferInfo;
+        synchronized (lock) {
+            videoConfigBuffer = byteBuffer;
+            videoBufferInfo = bufferInfo;
+        }
     }
 
     public void configAudio(ByteBuffer byteBuffer, MediaCodec.BufferInfo bufferInfo) {
-        audioConfigBuffer = byteBuffer;
-        audioBufferInfo = bufferInfo;
+        synchronized (lock) {
+            audioConfigBuffer = byteBuffer;
+            audioBufferInfo = bufferInfo;
+        }
     }
 
     public void addTrack(MediaFormat format, int type) {
