@@ -25,6 +25,8 @@ public class AudioCodecRecorder {
     private ByteBuffer[] encoderInputBuffers;
     private ByteBuffer[] encoderOutputBuffers;
     private MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
+    private MediaCodec.BufferInfo configBufferInfo = new MediaCodec.BufferInfo();
+    private ByteBuffer configBuffer;
 
     private long startTime; // 这个时间不重要，只要不违背时间序列就可以，因为在muxer中会重新计算
 
@@ -72,7 +74,12 @@ public class AudioCodecRecorder {
                         encoder.stop();
                         encoder.release();
                         encoder = null;
-                    } else {
+                    } else if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0){
+                        configBuffer = ByteBuffer.allocate(encoderOutputBuffers[encoderStatus].capacity());
+                        configBuffer.put(encoderOutputBuffers[encoderStatus]);
+                        configBufferInfo.set(bufferInfo.offset, bufferInfo.size, bufferInfo.presentationTimeUs, bufferInfo.flags);
+                        encoder.releaseOutputBuffer(encoderStatus, false);
+                    }else {
                         if (muxer != null) muxer.writeSample(encoderOutputBuffers[encoderStatus], bufferInfo, 2);
                         encoder.releaseOutputBuffer(encoderStatus, false);
                     }
@@ -94,6 +101,7 @@ public class AudioCodecRecorder {
     //------------------------------------以下代码在Project线程
 
     public void installMuxer(AVMuxer muxer) {
+        muxer.configAudio(configBuffer, configBufferInfo);
         muxer.addTrack(outputFormat, 2);
         this.muxer = muxer;
     }
