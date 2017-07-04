@@ -24,7 +24,6 @@ public class AVMuxer {
     private long startTime;
 
     private int videoFrameCount;
-    private int audioFrameCount;
 
     public AVMuxer(File outputFile) {
         try {
@@ -37,18 +36,15 @@ public class AVMuxer {
     }
 
     //------------------------------------以上代码在主线程
-    //------------------------------------以下代码在Camera线程
 
-    private void start() {
-        this.startTime = System.nanoTime() / 1000L;
-        this.writeToFile = true;
-    }
-
+    //------------------------------------Project线程
     public void stop() {
         writeToFile = false;
         muxer.release();
     }
+    //------------------------------------Project线程
 
+    //------------------------------------Camera/Mic线程
     public synchronized void addTrack(MediaFormat format, int type) {
         switch (type) {
             case 1:
@@ -60,7 +56,7 @@ public class AVMuxer {
         }
         if (videoTrackerIndex != -1 && audioTrackerIndex != -1) {
             muxer.start();
-            start();
+            writeToFile = true;
         }
     }
 
@@ -68,18 +64,29 @@ public class AVMuxer {
         if (!writeToFile) return;
         switch (type) {
             case 1:
-                if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0 || videoFrameCount > 0) {
+                if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0 && videoFrameCount == 0) {
+                    // 这是接收到的第一个关键帧
+                    startTime = System.nanoTime() / 1000L;
+                    bufferInfo.presentationTimeUs = 0L;
+                    muxer.writeSampleData(videoTrackerIndex, byteBuf, bufferInfo);
+                    videoFrameCount = 1;
+                } else if (videoFrameCount > 0){
+                    // 第一个关键帧之后的帧
                     bufferInfo.presentationTimeUs = System.nanoTime() / 1000L - startTime;
                     muxer.writeSampleData(videoTrackerIndex, byteBuf, bufferInfo);
                     videoFrameCount++;
+                } else {
+                    // 第一个关键帧之前的帧
                 }
                 break;
             case 2:
-                bufferInfo.presentationTimeUs = System.nanoTime() / 1000L - startTime;
-                muxer.writeSampleData(audioTrackerIndex, byteBuf, bufferInfo);
-                audioFrameCount++;
+                if (videoFrameCount > 0) {
+                    bufferInfo.presentationTimeUs = System.nanoTime() / 1000L - startTime;
+                    muxer.writeSampleData(audioTrackerIndex, byteBuf, bufferInfo);
+                }
                 break;
         }
     }
+    //------------------------------------Camera/Mic线程
 
 }

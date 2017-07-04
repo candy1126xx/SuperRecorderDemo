@@ -21,7 +21,6 @@ public class MergeMuxer {
     private boolean writeToFile;
 
     private int videoFrameCount;
-    private int audioFrameCount;
 
     private boolean muxerStarted;
 
@@ -61,14 +60,22 @@ public class MergeMuxer {
         if (!writeToFile) return;
         switch (type) {
             case 1:
-                if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0 || videoFrameCount > 0) {
+                if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0 && videoFrameCount == 0) {
+                    // 这是接收到的第一个关键帧
+                    muxer.writeSampleData(videoTrackerIndex, byteBuf, bufferInfo);
+                    videoFrameCount = 1;
+                } else if (videoFrameCount > 0){
+                    // 第一个关键帧之后的帧
                     muxer.writeSampleData(videoTrackerIndex, byteBuf, bufferInfo);
                     videoFrameCount++;
+                } else {
+                    // 第一个关键帧之前的帧
                 }
                 break;
             case 2:
-                muxer.writeSampleData(audioTrackerIndex, byteBuf, bufferInfo);
-                audioFrameCount++;
+                if (videoFrameCount > 0) {
+                    muxer.writeSampleData(audioTrackerIndex, byteBuf, bufferInfo);
+                }
                 break;
         }
     }
