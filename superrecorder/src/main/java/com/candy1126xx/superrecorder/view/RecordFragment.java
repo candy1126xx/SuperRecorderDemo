@@ -2,6 +2,7 @@ package com.candy1126xx.superrecorder.view;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -10,11 +11,13 @@ import android.view.ViewGroup;
 import android.widget.Button;
 
 import com.candy1126xx.superrecorder.R;
+import com.candy1126xx.superrecorder.SuperRecorder;
 import com.candy1126xx.superrecorder.component.Preview;
 import com.candy1126xx.superrecorder.component.RecordProgress;
 import com.candy1126xx.superrecorder.model.Clip;
 import com.candy1126xx.superrecorder.model.ProjectParameter;
 import com.candy1126xx.superrecorder.model.RecordParameter;
+import com.candy1126xx.superrecorder.model.Video;
 import com.candy1126xx.superrecorder.record.RecordDevice;
 
 import java.util.LinkedList;
@@ -76,8 +79,16 @@ public class RecordFragment extends BaseFragment {
             }
 
             @Override
-            public void onRecordComplete() {
+            public void onStartMerge() {
+                new AlertDialog.Builder(mParent).setTitle("正在合并……").create().show();
+            }
 
+            @Override
+            public void onRecordComplete(Video video) {
+                mParent.finish();
+                if (video != null && SuperRecorder.result != null)
+                    SuperRecorder.result.onSuccess(video);
+                SuperRecorder.result = null;
             }
         });
 

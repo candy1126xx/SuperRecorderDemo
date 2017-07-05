@@ -4,26 +4,8 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <SurfaceView
-        android:id="@+id/surface_view"
-        android:layout_width="300dp"
-        android:layout_height="300dp" />
-
-    <Button
-        android:id="@+id/btn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="开始"/>
-
-    <Button
-        android:id="@+id/btn_merge"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="合并"/>
-
-    <Button
-        android:id="@+id/btn_delete"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="删除当前段"/>
+    <VideoView
+        android:id="@+id/video_view"
+        android:layout_width="match_parent"
+        android:layout_height="360dp" />
 </LinearLayout>

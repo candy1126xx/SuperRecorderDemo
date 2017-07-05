@@ -8,7 +8,9 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.widget.FrameLayout;
 
+import com.candy1126xx.superrecorder.OnRecordResult;
 import com.candy1126xx.superrecorder.R;
+import com.candy1126xx.superrecorder.SuperRecorder;
 import com.candy1126xx.superrecorder.model.ProjectParameter;
 import com.candy1126xx.superrecorder.model.RecordParameter;
 
@@ -26,15 +28,6 @@ public class SuperRecorderActivity extends FragmentActivity {
     private ProjectParameter projectParameter;
 
     private FragmentManager fm;
-
-    public static final void startRecord(Activity activity, int requestCode,
-                                         RecordParameter recordParameter,
-                                         ProjectParameter projectParameter) {
-        Intent intent = new Intent(activity, SuperRecorderActivity.class);
-        intent.putExtra("recordParameter", recordParameter);
-        intent.putExtra("projectParameter", projectParameter);
-        activity.startActivityForResult(intent, requestCode);
-    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {

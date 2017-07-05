@@ -1,16 +1,26 @@
 package com.candy1126xx.superrecorder.record;
 
+import android.graphics.Bitmap;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.media.MediaMetadataRetriever;
 
 import com.candy1126xx.superrecorder.model.Clip;
 import com.candy1126xx.superrecorder.model.ProjectParameter;
+import com.candy1126xx.superrecorder.model.Video;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
+
+import static android.media.MediaMetadataRetriever.METADATA_KEY_DURATION;
+import static android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT;
+import static android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH;
+import static android.media.MediaMetadataRetriever.OPTION_NEXT_SYNC;
 
 /**
  * Created by Administrator on 2017/6/30 0030.
@@ -47,6 +57,8 @@ public class ProjectManager implements ClipMuxer.ClipMuxerCallback {
     private String tempPath; // 存放Clips的文件夹
 
     private String resultPath; // 输出文件的路径
+
+    private String avatarPath; // 输出封面的路径
     //---------------------------------Project管理
 
     private ProjectManagerCallback callback;
@@ -55,6 +67,7 @@ public class ProjectManager implements ClipMuxer.ClipMuxerCallback {
         this.rootPath = parameter.getOutputPath();
         this.tempPath = rootPath + File.separator + parameter.getTitle();
         this.resultPath = tempPath + ".mp4";
+        this.avatarPath = tempPath + ".png";
 
         File rootFile = new File(rootPath);
         if (!rootFile.exists()) rootFile.mkdirs();
@@ -102,6 +115,8 @@ public class ProjectManager implements ClipMuxer.ClipMuxerCallback {
     }
 
     public void mergeAllClips() {
+        if (callback != null) callback.onStartMerge();
+
         if (currentMuxer != null) stopCurrentClip();
         mergeMuxer = new MergeMuxer(new File(resultPath));
         for (Clip clip : clips) {
@@ -113,7 +128,54 @@ public class ProjectManager implements ClipMuxer.ClipMuxerCallback {
         bufferInfo = null;
         clips = null;
 
-        if (callback != null) callback.onAllClipsMerged();
+        if (callback != null) callback.onAllClipsMerged(produceVideo());
+    }
+
+    private Video produceVideo() {
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        retriever.setDataSource(resultPath);
+        Bitmap avatarBitmap = retriever.getFrameAtTime(0, OPTION_NEXT_SYNC);
+        String duration = retriever.extractMetadata(METADATA_KEY_DURATION);
+        String width = retriever.extractMetadata(METADATA_KEY_VIDEO_WIDTH);
+        String height = retriever.extractMetadata(METADATA_KEY_VIDEO_HEIGHT);
+        retriever.release();
+
+        if (avatarBitmap == null) {
+            return null;
+        } else {
+            File file = new File(avatarPath);
+            OutputStream stream = null;
+            try {
+                Bitmap.CompressFormat format = Bitmap.CompressFormat.PNG;
+                int quality = 100;
+                if (file.exists() && !file.delete()) return null;
+                if (!file.createNewFile()) return null;
+                stream = new FileOutputStream(file);
+                avatarBitmap.compress(format, quality, stream);
+                avatarBitmap.recycle();
+                avatarBitmap = null;
+            } catch (IOException e) {
+                return null;
+            } finally {
+                try {
+                    if (stream != null) {
+                        stream.close();
+                        stream = null;
+                    }
+                } catch (IOException e) {
+
+                }
+            }
+        }
+
+        Video video = new Video();
+        video.coverPath = avatarPath;
+        video.width = width;
+        video.height = height;
+        video.outputPath = resultPath;
+        video.duration = duration;
+
+        return video;
     }
 
     private void mergeClip(String clipPath) {
@@ -198,6 +260,8 @@ public class ProjectManager implements ClipMuxer.ClipMuxerCallback {
 
         void onCurrentClipDelete();
 
-        void onAllClipsMerged();
+        void onStartMerge();
+
+        void onAllClipsMerged(Video video);
     }
 }

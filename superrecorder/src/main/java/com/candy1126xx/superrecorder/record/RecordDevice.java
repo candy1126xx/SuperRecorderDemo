@@ -13,6 +13,7 @@ import android.view.SurfaceHolder;
 import com.candy1126xx.superrecorder.model.Clip;
 import com.candy1126xx.superrecorder.model.ProjectParameter;
 import com.candy1126xx.superrecorder.model.RecordParameter;
+import com.candy1126xx.superrecorder.model.Video;
 
 import java.util.LinkedList;
 
@@ -78,7 +79,7 @@ public class RecordDevice implements
         this.maxDuration = recordParameter.getMaxDuration();
         this.displaySurface = displaySurface;
 
-        mainHandler = new Handler(new Handler.Callback() {
+        mainHandler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
             @Override
             public boolean handleMessage(Message msg) {
                 switch (msg.what) {
@@ -104,6 +105,12 @@ public class RecordDevice implements
                     case 5: // 删除进度
                         clips.removeLast();
                         callback.onRecordProgress(clips, 3);
+                        break;
+                    case 6:
+                        callback.onStartMerge();
+                        break;
+                    case 7:
+                        callback.onRecordComplete((Video) msg.getData().getSerializable("video"));
                         break;
                 }
                 return true;
@@ -272,7 +279,7 @@ public class RecordDevice implements
         bundle.putSerializable("newClip", newClip);
         message.setData(bundle);
         message.what = 3;
-        mainHandler.dispatchMessage(message);
+        mainHandler.sendMessage(message);
     }
 
     @Override
@@ -283,7 +290,7 @@ public class RecordDevice implements
         bundle.putLong("totalDuration", totalDuration);
         message.setData(bundle);
         message.what = 4;
-        mainHandler.dispatchMessage(message);
+        mainHandler.sendMessage(message);
     }
 
     @Override
@@ -298,8 +305,18 @@ public class RecordDevice implements
     }
 
     @Override
-    public void onAllClipsMerged() {
-        callback.onRecordComplete();
+    public void onStartMerge() {
+        mainHandler.obtainMessage(6).sendToTarget();
+    }
+
+    @Override
+    public void onAllClipsMerged(Video video) {
+        Message message = new Message();
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("video", video);
+        message.setData(bundle);
+        message.what = 7;
+        mainHandler.sendMessage(message);
     }
     //--------------------------------------Project线程
 
@@ -308,6 +325,8 @@ public class RecordDevice implements
 
         void onRecordProgress(LinkedList<Clip> clips, int type);
 
-        void onRecordComplete();
+        void onStartMerge();
+
+        void onRecordComplete(Video video);
     }
 }
