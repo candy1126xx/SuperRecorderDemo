@@ -3,12 +3,14 @@ package com.candy1126xx.superrecorder.record;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.os.Environment;
-import android.text.TextUtils;
+
+import com.candy1126xx.superrecorder.model.Clip;
+import com.candy1126xx.superrecorder.model.ProjectParameter;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.LinkedList;
 
 /**
  * Created by Administrator on 2017/6/30 0030.
@@ -18,8 +20,6 @@ public class ProjectManager implements ClipMuxer.ClipMuxerCallback {
 
     //---------------------------------生成Clip
     private ClipMuxer currentMuxer;
-
-    private int index;
     //---------------------------------生成Clip
 
     //---------------------------------合成
@@ -39,19 +39,23 @@ public class ProjectManager implements ClipMuxer.ClipMuxerCallback {
     private MediaExtractor currentExtractor;
     //---------------------------------合成复用
 
-    private String rootPath = Environment.getExternalStorageDirectory() +
-            File.separator + "SuperRecorder";
+    //---------------------------------Project管理
+    private LinkedList<Clip> clips = new LinkedList<>();
 
-    private String tempPath = rootPath + File.separator + "demo";
+    private String rootPath; // Project的根目录
 
-    private String currentPath; // 当前Clip的Path
-    private long totalDuration; // 到目前的总时长
+    private String tempPath; // 存放Clips的文件夹
 
-    private String resultPath = rootPath + File.separator + "output.mp4";
+    private String resultPath; // 输出文件的路径
+    //---------------------------------Project管理
 
     private ProjectManagerCallback callback;
 
-    public ProjectManager() {
+    public ProjectManager(ProjectParameter parameter) {
+        this.rootPath = parameter.getOutputPath();
+        this.tempPath = rootPath + File.separator + parameter.getTitle();
+        this.resultPath = tempPath + ".mp4";
+
         File rootFile = new File(rootPath);
         if (!rootFile.exists()) rootFile.mkdirs();
         File tempFile = new File(tempPath);
@@ -60,36 +64,50 @@ public class ProjectManager implements ClipMuxer.ClipMuxerCallback {
     }
 
     public void createNewClip() {
-        index++;
-        currentPath = tempPath + File.separator + "demo" + index + ".mp4";
-        currentMuxer = new ClipMuxer(new File(currentPath));
+        Clip clip = new Clip();
+        clip.path = tempPath + File.separator + clips.size() + ".mp4";
+        clip.duration = 0L;
+        clip.startTime = calTotalDuration();
+        clip.endTime = clip.startTime;
+        currentMuxer = new ClipMuxer(new File(clip.path));
         currentMuxer.setClipMuxerCallback(this);
-        if (callback != null) callback.onNewClipCreated(currentPath, totalDuration);
+        clips.addLast(clip);
+        if (callback != null) callback.onNewClipCreated(clip);
+    }
+
+    private long calTotalDuration() {
+        long d = 0;
+        for (Clip clip : clips) {
+            d += clip.duration;
+        }
+        return d;
     }
 
     public void stopCurrentClip() {
         currentMuxer.stop();
-        totalDuration += currentMuxer.getDuration();
         if (callback != null) callback.onCurrentClipStop();
     }
 
     public void deleteCurrentClip() {
-        if (TextUtils.isEmpty(currentPath)) return;
-        File currentClip = new File(currentPath);
+        if (clips.size() <= 0) return;
+        File currentClip = new File(clips.getLast().path);
         if (currentClip.exists() && currentClip.delete()) {
+            clips.removeLast();
             if (callback != null) callback.onCurrentClipDelete();
         }
     }
 
     public void mergeAllClips() {
         mergeMuxer = new MergeMuxer(new File(resultPath));
-        File tempFile = new File(tempPath);
-        File[] clipFiles = tempFile.listFiles();
-        for (File file : clipFiles) {
-            mergeClip(file.getAbsolutePath());
+        for (Clip clip : clips) {
+            mergeClip(clip.path);
         }
         mergeMuxer.stop();
         mergeMuxer = null;
+        inputBuffer = null;
+        bufferInfo = null;
+        clips = null;
+
         if (callback != null) callback.onAllClipsMerged();
     }
 
@@ -160,11 +178,14 @@ public class ProjectManager implements ClipMuxer.ClipMuxerCallback {
 
     @Override
     public void onProgress(long duration) {
+        Clip last = clips.getLast();
+        last.duration = duration;
+        last.endTime = last.startTime + last.duration;
         callback.onCurrentClipProgress(duration);
     }
 
     public interface ProjectManagerCallback {
-        void onNewClipCreated(String currentClipPath, long currentClipStartTime);
+        void onNewClipCreated(Clip newClip);
 
         void onCurrentClipProgress(long currentClipDuration);
 

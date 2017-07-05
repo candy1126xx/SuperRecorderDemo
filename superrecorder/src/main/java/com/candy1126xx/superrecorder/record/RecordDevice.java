@@ -11,6 +11,7 @@ import android.os.Message;
 import android.view.SurfaceHolder;
 
 import com.candy1126xx.superrecorder.model.Clip;
+import com.candy1126xx.superrecorder.model.ProjectParameter;
 import com.candy1126xx.superrecorder.model.RecordParameter;
 
 import java.util.LinkedList;
@@ -54,8 +55,7 @@ public class RecordDevice implements
     private RecordDeviceCallback callback;
 
     private boolean cameraReady, audioReady;
-
-    private LinkedList<Clip> clips = new LinkedList<>();
+    private LinkedList<Clip> clips = new LinkedList<>(); // 主线程专用
 
     private RecordDevice(Application app) {
         this.manager = app.getAssets();
@@ -71,9 +71,9 @@ public class RecordDevice implements
     }
 
     // 接收用户发来的视频参数
-    public void init(RecordParameter parameter, SurfaceHolder displaySurface) {
-        this.exceptWidth = parameter.getExceptWidth();
-        this.exceptHeight = parameter.getExceptHeight();
+    public void init(RecordParameter recordParameter, ProjectParameter projectParameter, SurfaceHolder displaySurface) {
+        this.exceptWidth = recordParameter.getExceptWidth();
+        this.exceptHeight = recordParameter.getExceptHeight();
         this.displaySurface = displaySurface;
 
         mainHandler = new Handler(new Handler.Callback() {
@@ -89,19 +89,18 @@ public class RecordDevice implements
                         if (cameraReady && audioReady) callback.onDeviceReady();
                         break;
                     case 3: // 新增进度
-                        Clip clip = new Clip();
-                        clip.path = msg.getData().getString("path");
-                        clip.startTime = msg.getData().getLong("startTime");
-                        clips.add(clip);
+                        clips.add((Clip) msg.getData().getSerializable("newClip"));
+                        callback.onRecordProgress(clips, 1);
                         break;
                     case 4: // 更新进度
                         Clip last = clips.getLast();
                         last.duration = msg.getData().getLong("duration");
                         last.endTime = last.startTime + last.duration;
-                        callback.onRecordProgress(clips);
+                        callback.onRecordProgress(clips ,2);
                         break;
                     case 5: // 删除进度
                         clips.removeLast();
+                        callback.onRecordProgress(clips ,3);
                         break;
                 }
                 return true;
@@ -109,17 +108,17 @@ public class RecordDevice implements
         });
 
         // 创建Manager
-        cameraManager = new CameraManager(parameter.getFacing(), exceptWidth, exceptHeight);
+        cameraManager = new CameraManager(recordParameter.getFacing(), exceptWidth, exceptHeight);
         cameraManager.setCallback(this);
 
         audioManager = new AudioManager();
         audioManager.setCallback(this);
 
-        projectManager = new ProjectManager();
+        projectManager = new ProjectManager(projectParameter);
         projectManager.setCallback(this);
 
         // 创建子线程
-        cameraThread = new HandlerThread("Camera" + parameter.getFacing());
+        cameraThread = new HandlerThread("Camera" + recordParameter.getFacing());
         cameraThread.start();
         cameraHandler = new Handler(cameraThread.getLooper(), new Handler.Callback() {
             @Override
@@ -254,13 +253,12 @@ public class RecordDevice implements
 
     //--------------------------------------Project线程
     @Override
-    public void onNewClipCreated(String currentClipPath, long currentClipStartTime) {
+    public void onNewClipCreated(Clip newClip) {
         mediaCodec.installMuxer(projectManager.getCurrentMuxer());
         audioCodec.installMuxer(projectManager.getCurrentMuxer());
         Message message = new Message();
         Bundle bundle = new Bundle();
-        bundle.putString("path", currentClipPath);
-        bundle.putLong("startTime", currentClipStartTime);
+        bundle.putSerializable("newClip", newClip);
         message.setData(bundle);
         message.what = 3;
         mainHandler.dispatchMessage(message);
@@ -295,7 +293,6 @@ public class RecordDevice implements
 
     public interface RecordDeviceCallback {
         void onDeviceReady();
-
-        void onRecordProgress(LinkedList<Clip> clips);
+        void onRecordProgress(LinkedList<Clip> clips, int type);
     }
 }

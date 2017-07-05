@@ -13,6 +13,7 @@ import com.candy1126xx.superrecorder.R;
 import com.candy1126xx.superrecorder.component.Preview;
 import com.candy1126xx.superrecorder.component.RecordProgress;
 import com.candy1126xx.superrecorder.model.Clip;
+import com.candy1126xx.superrecorder.model.ProjectParameter;
 import com.candy1126xx.superrecorder.model.RecordParameter;
 import com.candy1126xx.superrecorder.record.RecordDevice;
 
@@ -31,6 +32,7 @@ public class RecordFragment extends BaseFragment {
     private RecordDevice device;
 
     private RecordParameter recordParameter;
+    private ProjectParameter projectParameter;
 
     public static RecordFragment newInstance() {
         return new RecordFragment();
@@ -57,6 +59,7 @@ public class RecordFragment extends BaseFragment {
 
     private void initParameter() {
         recordParameter = mParent.getRecordParameter();
+        projectParameter = mParent.getProjectParameter();
     }
 
     private void initRecord() {
@@ -68,15 +71,15 @@ public class RecordFragment extends BaseFragment {
             }
 
             @Override
-            public void onRecordProgress(LinkedList<Clip> clips) {
-                progress.setProgress(clips);
+            public void onRecordProgress(LinkedList<Clip> clips, int type) {
+                if (type == 2 || type == 3) progress.setProgress(clips);
             }
         });
 
         preview.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
-                device.init(recordParameter, holder);
+                device.init(recordParameter, projectParameter, holder);
                 device.createMission();
             }
 

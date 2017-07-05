@@ -9,6 +9,7 @@ import android.support.v4.app.FragmentManager;
 import android.widget.FrameLayout;
 
 import com.candy1126xx.superrecorder.R;
+import com.candy1126xx.superrecorder.model.ProjectParameter;
 import com.candy1126xx.superrecorder.model.RecordParameter;
 
 /**
@@ -22,12 +23,16 @@ public class SuperRecorderActivity extends FragmentActivity {
     private RecordFragment recordFragment;
 
     private RecordParameter recordParameter;
+    private ProjectParameter projectParameter;
 
     private FragmentManager fm;
 
-    public static final void startReord(Activity activity, int requestCode, RecordParameter recordParameter) {
+    public static final void startRecord(Activity activity, int requestCode,
+                                         RecordParameter recordParameter,
+                                         ProjectParameter projectParameter) {
         Intent intent = new Intent(activity, SuperRecorderActivity.class);
         intent.putExtra("recordParameter", recordParameter);
+        intent.putExtra("projectParameter", projectParameter);
         activity.startActivityForResult(intent, requestCode);
     }
 
@@ -44,10 +49,15 @@ public class SuperRecorderActivity extends FragmentActivity {
 
     private void initData() {
         recordParameter = (RecordParameter) getIntent().getSerializableExtra("recordParameter");
+        projectParameter = (ProjectParameter) getIntent().getSerializableExtra("projectParameter");
     }
 
     protected RecordParameter getRecordParameter() {
         return recordParameter;
+    }
+
+    public ProjectParameter getProjectParameter() {
+        return projectParameter;
     }
 
     private void loadRecordFrg() {
