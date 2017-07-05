@@ -82,7 +82,7 @@ public class RecordFragment extends BaseFragment {
 
             @Override
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-
+                holder.setFixedSize(recordParameter.getExceptWidth(), recordParameter.getExceptHeight());
             }
 
             @Override
