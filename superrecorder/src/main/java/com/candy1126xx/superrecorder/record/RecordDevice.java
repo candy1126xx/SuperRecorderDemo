@@ -1,12 +1,19 @@
-package com.candy1126xx.superrecorder;
+package com.candy1126xx.superrecorder.record;
 
 import android.app.Application;
 import android.content.res.AssetManager;
 import android.hardware.Camera;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.os.Message;
 import android.view.SurfaceHolder;
+
+import com.candy1126xx.superrecorder.model.Clip;
+import com.candy1126xx.superrecorder.model.RecordParameter;
+
+import java.util.LinkedList;
 
 /**
  * Created by Administrator on 2017/6/20 0020.
@@ -30,6 +37,8 @@ public class RecordDevice implements
     private AudioCodecRecorder audioCodec;
     private MediaCodecRecorder mediaCodec;
 
+    private Handler mainHandler;
+
     private HandlerThread cameraThread;
     private Handler cameraHandler;
     private HandlerThread audioThread;
@@ -42,6 +51,12 @@ public class RecordDevice implements
 
     private AssetManager manager;
 
+    private RecordDeviceCallback callback;
+
+    private boolean cameraReady, audioReady;
+
+    private LinkedList<Clip> clips = new LinkedList<>();
+
     private RecordDevice(Application app) {
         this.manager = app.getAssets();
     }
@@ -51,14 +66,50 @@ public class RecordDevice implements
         return cameraDevice;
     }
 
+    public void setCallback(RecordDeviceCallback callback) {
+        this.callback = callback;
+    }
+
     // 接收用户发来的视频参数
-    public void init(int facing, int exceptWidth, int exceptHeight, SurfaceHolder displaySurface) {
-        this.exceptWidth = exceptWidth;
-        this.exceptHeight = exceptHeight;
+    public void init(RecordParameter parameter, SurfaceHolder displaySurface) {
+        this.exceptWidth = parameter.getExceptWidth();
+        this.exceptHeight = parameter.getExceptHeight();
         this.displaySurface = displaySurface;
 
-        // 创建CameraManager
-        cameraManager = new CameraManager(facing, exceptWidth, exceptHeight);
+        mainHandler = new Handler(new Handler.Callback() {
+            @Override
+            public boolean handleMessage(Message msg) {
+                switch (msg.what) {
+                    case 1: // Camera准备好了
+                        cameraReady = true;
+                        if (cameraReady && audioReady) callback.onDeviceReady();
+                        break;
+                    case 2: // Audio准备好了
+                        audioReady = true;
+                        if (cameraReady && audioReady) callback.onDeviceReady();
+                        break;
+                    case 3: // 新增进度
+                        Clip clip = new Clip();
+                        clip.path = msg.getData().getString("path");
+                        clip.startTime = msg.getData().getLong("startTime");
+                        clips.add(clip);
+                        break;
+                    case 4: // 更新进度
+                        Clip last = clips.getLast();
+                        last.duration = msg.getData().getLong("duration");
+                        last.endTime = last.startTime + last.duration;
+                        callback.onRecordProgress(clips);
+                        break;
+                    case 5: // 删除进度
+                        clips.removeLast();
+                        break;
+                }
+                return true;
+            }
+        });
+
+        // 创建Manager
+        cameraManager = new CameraManager(parameter.getFacing(), exceptWidth, exceptHeight);
         cameraManager.setCallback(this);
 
         audioManager = new AudioManager();
@@ -68,7 +119,7 @@ public class RecordDevice implements
         projectManager.setCallback(this);
 
         // 创建子线程
-        cameraThread = new HandlerThread("Camera" + facing);
+        cameraThread = new HandlerThread("Camera" + parameter.getFacing());
         cameraThread.start();
         cameraHandler = new Handler(cameraThread.getLooper(), new Handler.Callback() {
             @Override
@@ -174,6 +225,7 @@ public class RecordDevice implements
     @Override
     public void openCameraSuccess(Camera camera) {
         recorderMission = new RecorderMission(manager, camera, displaySurface, mediaCodec, exceptWidth, exceptHeight);
+        mainHandler.obtainMessage(1).sendToTarget();
     }
 
     @Override
@@ -190,6 +242,7 @@ public class RecordDevice implements
     //--------------------------------------Mic线程
     @Override
     public void onOpenMicSuccess() {
+        mainHandler.obtainMessage(2).sendToTarget();
         audioMission = new AudioMission(audioManager, audioCodec);
     }
 
@@ -201,9 +254,26 @@ public class RecordDevice implements
 
     //--------------------------------------Project线程
     @Override
-    public void onNewClipCreated() {
+    public void onNewClipCreated(String currentClipPath, long currentClipStartTime) {
         mediaCodec.installMuxer(projectManager.getCurrentMuxer());
         audioCodec.installMuxer(projectManager.getCurrentMuxer());
+        Message message = new Message();
+        Bundle bundle = new Bundle();
+        bundle.putString("path", currentClipPath);
+        bundle.putLong("startTime", currentClipStartTime);
+        message.setData(bundle);
+        message.what = 3;
+        mainHandler.dispatchMessage(message);
+    }
+
+    @Override
+    public void onCurrentClipProgress(long currentClipDuration) {
+        Message message = new Message();
+        Bundle bundle = new Bundle();
+        bundle.putLong("duration", currentClipDuration);
+        message.setData(bundle);
+        message.what = 4;
+        mainHandler.dispatchMessage(message);
     }
 
     @Override
@@ -214,7 +284,7 @@ public class RecordDevice implements
 
     @Override
     public void onCurrentClipDelete() {
-
+        mainHandler.obtainMessage(5).sendToTarget();
     }
 
     @Override
@@ -222,4 +292,10 @@ public class RecordDevice implements
         System.out.println("合并完成");
     }
     //--------------------------------------Project线程
+
+    public interface RecordDeviceCallback {
+        void onDeviceReady();
+
+        void onRecordProgress(LinkedList<Clip> clips);
+    }
 }

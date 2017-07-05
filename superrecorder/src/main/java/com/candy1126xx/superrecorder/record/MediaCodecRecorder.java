@@ -1,4 +1,4 @@
-package com.candy1126xx.superrecorder;
+package com.candy1126xx.superrecorder.record;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;

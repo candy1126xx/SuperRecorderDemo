@@ -1,4 +1,4 @@
-package com.candy1126xx.superrecorder;
+package com.candy1126xx.superrecorder.openglwrapper;
 
 import android.graphics.Rect;
 import android.opengl.GLES20;

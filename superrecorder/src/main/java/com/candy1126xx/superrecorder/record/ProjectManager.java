@@ -1,4 +1,4 @@
-package com.candy1126xx.superrecorder;
+package com.candy1126xx.superrecorder.record;
 
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
  * Created by Administrator on 2017/6/30 0030.
  */
 
-public class ProjectManager {
+public class ProjectManager implements ClipMuxer.ClipMuxerCallback {
 
     //---------------------------------生成Clip
     private ClipMuxer currentMuxer;
@@ -44,7 +44,8 @@ public class ProjectManager {
 
     private String tempPath = rootPath + File.separator + "demo";
 
-    private String currentPath;
+    private String currentPath; // 当前Clip的Path
+    private long totalDuration; // 到目前的总时长
 
     private String resultPath = rootPath + File.separator + "output.mp4";
 
@@ -62,11 +63,13 @@ public class ProjectManager {
         index++;
         currentPath = tempPath + File.separator + "demo" + index + ".mp4";
         currentMuxer = new ClipMuxer(new File(currentPath));
-        if (callback != null) callback.onNewClipCreated();
+        currentMuxer.setClipMuxerCallback(this);
+        if (callback != null) callback.onNewClipCreated(currentPath, totalDuration);
     }
 
     public void stopCurrentClip() {
         currentMuxer.stop();
+        totalDuration += currentMuxer.getDuration();
         if (callback != null) callback.onCurrentClipStop();
     }
 
@@ -159,8 +162,15 @@ public class ProjectManager {
         this.callback = callback;
     }
 
+    @Override
+    public void onProgress(long duration) {
+        callback.onCurrentClipProgress(duration);
+    }
+
     public interface ProjectManagerCallback {
-        void onNewClipCreated();
+        void onNewClipCreated(String currentClipPath, long currentClipStartTime);
+
+        void onCurrentClipProgress(long currentClipDuration);
 
         void onCurrentClipStop();
 

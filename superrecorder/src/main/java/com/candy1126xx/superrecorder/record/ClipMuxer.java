@@ -1,4 +1,4 @@
-package com.candy1126xx.superrecorder;
+package com.candy1126xx.superrecorder.record;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
@@ -21,6 +21,7 @@ public class ClipMuxer {
     private volatile boolean writeToFile;
 
     private volatile long startTime;
+    private volatile long duration;
 
     private volatile int videoFrameCount;
 
@@ -30,6 +31,8 @@ public class ClipMuxer {
     private MediaCodec.BufferInfo audioBufferInfo;
 
     private final static Object lock = new Object();
+
+    private ClipMuxerCallback callback;
 
     //------------------------------------Project线程
     public ClipMuxer(File outputFile) {
@@ -42,6 +45,10 @@ public class ClipMuxer {
                 e.printStackTrace();
             }
         }
+    }
+
+    public long getDuration() {
+        return duration;
     }
 
     public void stop() {
@@ -97,11 +104,14 @@ public class ClipMuxer {
                         bufferInfo.presentationTimeUs = 0L;
                         muxer.writeSampleData(videoTrackerIndex, byteBuf, bufferInfo);
                         videoFrameCount = 1;
+                        callback.onProgress(0);
                     } else if (videoFrameCount > 0) {
                         // 第一个关键帧之后的帧
-                        bufferInfo.presentationTimeUs = System.nanoTime() / 1000L - startTime;
+                        duration = System.nanoTime() / 1000L - startTime;
+                        bufferInfo.presentationTimeUs = duration;
                         muxer.writeSampleData(videoTrackerIndex, byteBuf, bufferInfo);
                         videoFrameCount++;
+                        callback.onProgress(duration);
                     } else {
                         // 第一个关键帧之前的帧
                     }
@@ -116,5 +126,13 @@ public class ClipMuxer {
         }
     }
     //------------------------------------Camera/Mic线程
+
+    public void setClipMuxerCallback(ClipMuxerCallback callback) {
+        this.callback = callback;
+    }
+
+    public interface ClipMuxerCallback{
+        void onProgress(long duration);
+    }
 
 }

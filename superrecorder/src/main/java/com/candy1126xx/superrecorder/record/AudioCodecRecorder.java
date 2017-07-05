@@ -1,4 +1,4 @@
-package com.candy1126xx.superrecorder;
+package com.candy1126xx.superrecorder.record;
 
 import android.media.AudioFormat;
 import android.media.MediaCodec;

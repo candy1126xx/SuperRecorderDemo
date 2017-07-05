@@ -1,7 +1,6 @@
-package com.candy1126xx.superrecorder;
+package com.candy1126xx.superrecorder.openglwrapper;
 
 import android.opengl.GLES20;
-import android.util.Log;
 
 import java.nio.IntBuffer;
 

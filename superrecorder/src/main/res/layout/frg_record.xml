@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.candy1126xx.superrecorder.component.Preview
+        android:id="@+id/preview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <com.candy1126xx.superrecorder.component.RecordProgress
+        android:id="@+id/progress"
+        android:layout_width="match_parent"
+        android:layout_height="10dp"
+        android:background="#b7b7b7"
+        android:layout_below="@id/preview"/>
+
+    <Button
+        android:id="@+id/btn_record"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="按住录制"
+        android:layout_below="@id/progress"
+        android:layout_centerHorizontal="true"/>
+
+    <Button
+        android:id="@+id/btn_delete"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="删除当前段"
+        android:layout_below="@id/progress"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="30dp"/>
+
+    <Button
+        android:id="@+id/btn_complete"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="合并"
+        android:layout_below="@id/progress"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="30dp"/>
+</RelativeLayout>

@@ -1,10 +1,15 @@
-package com.candy1126xx.superrecorder;
+package com.candy1126xx.superrecorder.record;
 
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.opengl.GLES20;
+
+import com.candy1126xx.superrecorder.openglwrapper.GlFilter;
+import com.candy1126xx.superrecorder.openglwrapper.GlFrameBuffer;
+import com.candy1126xx.superrecorder.openglwrapper.GlProgram;
+import com.candy1126xx.superrecorder.openglwrapper.GlTexture;
 
 import java.io.IOException;
 import java.io.InputStream;

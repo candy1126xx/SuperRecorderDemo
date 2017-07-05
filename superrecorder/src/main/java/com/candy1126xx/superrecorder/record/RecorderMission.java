@@ -1,4 +1,4 @@
-package com.candy1126xx.superrecorder;
+package com.candy1126xx.superrecorder.record;
 
 import android.content.res.AssetManager;
 import android.graphics.Rect;
@@ -6,8 +6,10 @@ import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
-import android.view.Surface;
 import android.view.SurfaceHolder;
+
+import com.candy1126xx.superrecorder.openglwrapper.EGLWrapper;
+import com.candy1126xx.superrecorder.openglwrapper.OpenGLUtils;
 
 import java.io.IOException;
 
