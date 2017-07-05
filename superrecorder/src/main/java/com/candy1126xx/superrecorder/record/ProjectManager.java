@@ -150,10 +150,6 @@ public class ProjectManager implements ClipMuxer.ClipMuxerCallback {
         }
     }
 
-    private void writeToResult(int trackIndex, long pts) {
-
-    }
-
     public ClipMuxer getCurrentMuxer() {
         return currentMuxer;
     }
