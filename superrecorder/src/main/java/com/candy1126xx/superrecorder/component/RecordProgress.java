@@ -22,32 +22,35 @@ public class RecordProgress extends View {
 
     public RecordProgress(Context context) {
         super(context);
+        init();
     }
 
     public RecordProgress(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
+        init();
     }
 
     public RecordProgress(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        init();
     }
 
     private long duration; // 总时长
 
     private LinkedList<Clip> clips = new LinkedList<>();
 
-    private Paint paint;
+    private Paint paint = new Paint();
 
-    private RectF rectF;
+    private RectF rectF = new RectF(0, 0, 0, 0);
+
+    private void init() {
+        paint.setStyle(Paint.Style.FILL_AND_STROKE);
+    }
 
     @Override
-    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        super.onLayout(changed, left, top, right, bottom);
-        if (paint == null) {
-            paint = new Paint();
-            paint.setStyle(Paint.Style.FILL_AND_STROKE);
-            rectF = new RectF(0, 0, 0, 20);
-        }
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        rectF.bottom = rectF.top + getMeasuredHeight();
     }
 
     @Override
