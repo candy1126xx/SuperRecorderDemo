@@ -74,6 +74,11 @@ public class RecordFragment extends BaseFragment {
             public void onRecordProgress(LinkedList<Clip> clips, int type) {
                 if (type == 2 || type == 3) progress.setProgress(clips);
             }
+
+            @Override
+            public void onRecordComplete() {
+
+            }
         });
 
         preview.getHolder().addCallback(new SurfaceHolder.Callback() {

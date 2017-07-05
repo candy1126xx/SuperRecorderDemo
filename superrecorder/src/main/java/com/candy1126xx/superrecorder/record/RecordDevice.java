@@ -29,6 +29,7 @@ public class RecordDevice implements
 
     private int exceptWidth;
     private int exceptHeight;
+    private long maxDuration;
 
     private SurfaceHolder displaySurface;
 
@@ -74,6 +75,7 @@ public class RecordDevice implements
     public void init(RecordParameter recordParameter, ProjectParameter projectParameter, SurfaceHolder displaySurface) {
         this.exceptWidth = recordParameter.getExceptWidth();
         this.exceptHeight = recordParameter.getExceptHeight();
+        this.maxDuration = recordParameter.getMaxDuration();
         this.displaySurface = displaySurface;
 
         mainHandler = new Handler(new Handler.Callback() {
@@ -96,11 +98,12 @@ public class RecordDevice implements
                         Clip last = clips.getLast();
                         last.duration = msg.getData().getLong("duration");
                         last.endTime = last.startTime + last.duration;
-                        callback.onRecordProgress(clips ,2);
+                        callback.onRecordProgress(clips, 2);
+                        reachMax(msg.getData().getLong("totalDuration"));
                         break;
                     case 5: // 删除进度
                         clips.removeLast();
-                        callback.onRecordProgress(clips ,3);
+                        callback.onRecordProgress(clips, 3);
                         break;
                 }
                 return true;
@@ -219,6 +222,14 @@ public class RecordDevice implements
         projectHandler.obtainMessage(4).sendToTarget();
     }
 
+    private boolean reachMax(long totalDuration) {
+        if (totalDuration >= maxDuration) {
+            startMerge();
+            return true;
+        }
+        return false;
+    }
+
     //--------------------------------------Camera线程
     // 打开摄像头后创建任务
     @Override
@@ -265,10 +276,11 @@ public class RecordDevice implements
     }
 
     @Override
-    public void onCurrentClipProgress(long currentClipDuration) {
+    public void onCurrentClipProgress(long currentClipDuration, long totalDuration) {
         Message message = new Message();
         Bundle bundle = new Bundle();
         bundle.putLong("duration", currentClipDuration);
+        bundle.putLong("totalDuration", totalDuration);
         message.setData(bundle);
         message.what = 4;
         mainHandler.dispatchMessage(message);
@@ -287,12 +299,15 @@ public class RecordDevice implements
 
     @Override
     public void onAllClipsMerged() {
-        System.out.println("合并完成");
+        callback.onRecordComplete();
     }
     //--------------------------------------Project线程
 
     public interface RecordDeviceCallback {
         void onDeviceReady();
+
         void onRecordProgress(LinkedList<Clip> clips, int type);
+
+        void onRecordComplete();
     }
 }

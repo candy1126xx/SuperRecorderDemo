@@ -15,6 +15,7 @@ public class RecordParameter implements Serializable {
     private int exceptHeight;
     private int facing;
     private long maxDuration;
+    private long minDuration;
 
     //--------------------------------------------
 
@@ -34,6 +35,10 @@ public class RecordParameter implements Serializable {
         return maxDuration;
     }
 
+    public long getMinDuration() {
+        return minDuration;
+    }
+
     private RecordParameter() {}
 
     //--------------------------------------------
@@ -48,6 +53,7 @@ public class RecordParameter implements Serializable {
             parameter.exceptHeight = 480;
             parameter.facing = CAMERA_FACING_BACK;
             parameter.maxDuration = 15000000;
+            parameter.minDuration = 2000000;
         }
 
         public Builder setResolution(int resolution) {
@@ -73,7 +79,12 @@ public class RecordParameter implements Serializable {
         }
 
         public Builder setMaxDuration(int max) {
-            parameter.maxDuration = max;
+            parameter.maxDuration = max * 1000000;
+            return this;
+        }
+
+        public Builder setMinDuration(int min) {
+            parameter.minDuration = min * 1000000;
             return this;
         }
 

@@ -47,10 +47,6 @@ public class ClipMuxer {
         }
     }
 
-    public long getDuration() {
-        return duration;
-    }
-
     public void stop() {
         synchronized (lock) {
             writeToFile = false;

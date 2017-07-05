@@ -84,8 +84,12 @@ public class ProjectManager implements ClipMuxer.ClipMuxerCallback {
     }
 
     public void stopCurrentClip() {
-        currentMuxer.stop();
-        if (callback != null) callback.onCurrentClipStop();
+        if (currentMuxer != null) {
+            currentMuxer.stop();
+            currentMuxer = null;
+            if (callback != null) callback.onCurrentClipStop();
+            if (clips.getLast().duration < 1000) deleteCurrentClip(); // 如果Clip太短，无法保证写入了有效数据
+        }
     }
 
     public void deleteCurrentClip() {
@@ -98,6 +102,7 @@ public class ProjectManager implements ClipMuxer.ClipMuxerCallback {
     }
 
     public void mergeAllClips() {
+        if (currentMuxer != null) stopCurrentClip();
         mergeMuxer = new MergeMuxer(new File(resultPath));
         for (Clip clip : clips) {
             mergeClip(clip.path);
@@ -181,13 +186,13 @@ public class ProjectManager implements ClipMuxer.ClipMuxerCallback {
         Clip last = clips.getLast();
         last.duration = duration;
         last.endTime = last.startTime + last.duration;
-        callback.onCurrentClipProgress(duration);
+        callback.onCurrentClipProgress(duration, calTotalDuration());
     }
 
     public interface ProjectManagerCallback {
         void onNewClipCreated(Clip newClip);
 
-        void onCurrentClipProgress(long currentClipDuration);
+        void onCurrentClipProgress(long currentClipDuration, long totalDuration);
 
         void onCurrentClipStop();
 
