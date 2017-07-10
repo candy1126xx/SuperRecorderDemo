@@ -21,8 +21,6 @@ import javax.microedition.khronos.egl.EGLSurface;
 
 public class EGLWrapper {
 
-    public static final int FLAG_RECORDABLE = 1;
-    private static final int EGL_RECORDABLE_ANDROID = 12610;
     private EGL10 _egl = (EGL10) EGLContext.getEGL();
     private EGLDisplay mEGLDisplay;
     private EGLContext mEGLContext;
@@ -44,13 +42,13 @@ public class EGLWrapper {
             this.mEGLDisplay = null;
             throw new RuntimeException("unable to initialize EGL14");
         } else {
-            this.mEglExtensions = this._egl.eglQueryString(this.mEGLDisplay, 12373);
-            EGLConfig config = this.getConfig(flags, 2);
+            this.mEglExtensions = this._egl.eglQueryString(this.mEGLDisplay, EGL11.EGL_EXTENSIONS);
+            EGLConfig config = this.getConfig(flags);
             if(config == null) {
                 throw new RuntimeException("Unable to find a suitable EGLConfig");
             } else {
-                short EGL_CONTEXT_CLIENT_VERSION = 12440;
-                int[] attrib2_list = new int[]{EGL_CONTEXT_CLIENT_VERSION, 2, 12344};
+                short EGL_CONTEXT_CLIENT_VERSION = 0x3098;
+                int[] attrib2_list = new int[]{EGL_CONTEXT_CLIENT_VERSION, 2, EGL11.EGL_NONE};
                 EGLContext context = this._egl.eglCreateContext(this.mEGLDisplay, config, sharedContext, attrib2_list);
                 this.checkEglError("eglCreateContext");
                 this.mEGLConfig = config;
@@ -59,22 +57,26 @@ public class EGLWrapper {
         }
     }
 
-    private EGLConfig getConfig(int flags, int version) {
-        byte renderableType = 4;
-        int[] attribList = new int[]{12324, 8, 12323, 8, 12322, 8, 12321, 8, 12352, renderableType, 12339, 5, 12344, 0, 12344};
+    private EGLConfig getConfig(int flags) {
+        int[] attribList = new int[]{
+                EGL11.EGL_RED_SIZE, 8,
+                EGL11.EGL_GREEN_SIZE, 8,
+                EGL11.EGL_BLUE_SIZE, 8,
+                EGL11.EGL_ALPHA_SIZE, 8,
+                EGL11.EGL_RENDERABLE_TYPE, 4,
+                EGL11.EGL_SURFACE_TYPE, 5,
+                EGL11.EGL_NONE, 0,
+                EGL11.EGL_NONE};
         if((flags & 1) != 0 && this.mEglExtensions != null) {
-            if(!this.mEglExtensions.contains("EGL_ANDROID_recordable") || Build.MODEL.equals("M351") && Build.VERSION.SDK_INT == 19) {
-                Log.d("QpOpengl", "Extensions = " + this.mEglExtensions);
-            } else {
-                attribList[attribList.length - 3] = 12610;
-                attribList[attribList.length - 2] = 1;
+            if(this.mEglExtensions.contains("EGL_ANDROID_recordable") && Build.MODEL.equals("M351") && Build.VERSION.SDK_INT != 19) {
+                attribList[attribList.length - 3] = 0x3142;
+                attribList[attribList.length - 2] = 0x0001;
             }
         }
 
         EGLConfig[] configs = new EGLConfig[1];
         int[] numConfigs = new int[1];
         if(!this._egl.eglChooseConfig(this.mEGLDisplay, attribList, configs, configs.length, numConfigs)) {
-            Log.w("QpOpengl", "unable to find RGB8888 / " + version + " EGLConfig");
             return null;
         } else {
             return configs[0];
@@ -101,7 +103,7 @@ public class EGLWrapper {
         if(!(surface instanceof Surface) && !(surface instanceof SurfaceTexture) && !(surface instanceof SurfaceHolder)) {
             throw new RuntimeException("invalid surface: " + surface);
         } else {
-            int[] surfaceAttributes = new int[]{12344};
+            int[] surfaceAttributes = new int[]{EGL11.EGL_NONE};
             EGLSurface eglSurface = this._egl.eglCreateWindowSurface(this.mEGLDisplay, this.mEGLConfig, surface, surfaceAttributes);
             this.checkEglError("eglCreateWindowSurface");
             if(eglSurface == null) {
@@ -113,7 +115,7 @@ public class EGLWrapper {
     }
 
     public EGLSurface createPbufferSurface(int w, int h) {
-        int[] surfaceAttributes = new int[]{12375, w, 12374, h, 12344};
+        int[] surfaceAttributes = new int[]{EGL11.EGL_WIDTH, w, EGL11.EGL_HEIGHT, h, EGL11.EGL_NONE};
         EGLSurface eglSurface = this._egl.eglCreatePbufferSurface(this.mEGLDisplay, this.mEGLConfig, surfaceAttributes);
         if(eglSurface == EGL10.EGL_NO_SURFACE) {
             this.checkEglError("createPbufferSurface");
@@ -124,10 +126,6 @@ public class EGLWrapper {
     }
 
     public void makeCurrent(EGLSurface eglSurface) {
-        if(this.mEGLDisplay == EGL11.EGL_NO_DISPLAY) {
-            Log.d("QpOpengl", "NOTE: makeCurrent w/o display");
-        }
-
         if(!this._egl.eglMakeCurrent(this.mEGLDisplay, eglSurface, eglSurface, this.mEGLContext)) {
             this.checkEglError("Make current");
             throw new RuntimeException("eglMakeCurrent failed");
