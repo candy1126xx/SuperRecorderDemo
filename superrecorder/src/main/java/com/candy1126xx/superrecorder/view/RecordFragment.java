@@ -66,7 +66,7 @@ public class RecordFragment extends BaseFragment {
     }
 
     private void initRecord() {
-        device = RecordDevice.getInstance(mParent.getApplication());
+        device = RecordDevice.getInstance();
         device.setCallback(new RecordDevice.RecordDeviceCallback() {
             @Override
             public void onDeviceReady() {

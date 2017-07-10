@@ -1,7 +1,5 @@
 package com.candy1126xx.superrecorder.record;
 
-import android.app.Application;
-import android.content.res.AssetManager;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
@@ -52,19 +50,16 @@ public class RecordDevice implements
     private RecorderMission recorderMission;
     private AudioMission audioMission;
 
-    private AssetManager manager;
-
     private RecordDeviceCallback callback;
 
     private boolean cameraReady, audioReady;
     private LinkedList<Clip> clips = new LinkedList<>(); // 主线程专用
 
-    private RecordDevice(Application app) {
-        this.manager = app.getAssets();
+    private RecordDevice() {
     }
 
-    public static RecordDevice getInstance(Application app) {
-        if (cameraDevice == null) cameraDevice = new RecordDevice(app);
+    public static RecordDevice getInstance() {
+        if (cameraDevice == null) cameraDevice = new RecordDevice();
         return cameraDevice;
     }
 
@@ -241,7 +236,7 @@ public class RecordDevice implements
     // 打开摄像头后创建任务
     @Override
     public void openCameraSuccess(Camera camera) {
-        recorderMission = new RecorderMission(manager, camera, displaySurface, mediaCodec, exceptWidth, exceptHeight);
+        recorderMission = new RecorderMission(camera, displaySurface, mediaCodec, exceptWidth, exceptHeight);
         mainHandler.obtainMessage(1).sendToTarget();
     }
 
