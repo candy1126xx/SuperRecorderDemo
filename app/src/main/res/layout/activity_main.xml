@@ -8,4 +8,9 @@
         android:id="@+id/video_view"
         android:layout_width="match_parent"
         android:layout_height="360dp" />
+
+    <ImageView
+        android:id="@+id/iv"
+        android:layout_width="100dp"
+        android:layout_height="100dp" />
 </LinearLayout>

@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/SuperRecorderDemo.iml" filepath="$PROJECT_DIR$/SuperRecorderDemo.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libopencv/libopencv.iml" filepath="$PROJECT_DIR$/libopencv/libopencv.iml" />
       <module fileurl="file://$PROJECT_DIR$/superrecorder/superrecorder.iml" filepath="$PROJECT_DIR$/superrecorder/superrecorder.iml" />
     </modules>
   </component>
