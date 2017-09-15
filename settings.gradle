@@ -1,1 +1,1 @@
-include ':app', ':superrecorder', ':libopencv'
+include ':app', ':superrecorder'

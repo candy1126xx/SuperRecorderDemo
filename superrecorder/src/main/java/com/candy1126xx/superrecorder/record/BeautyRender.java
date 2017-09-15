@@ -29,8 +29,13 @@ public class BeautyRender {
 
     private float[] _TextureTransform;
 
+    private int cameraWidth;
+    private int cameraHeight;
+
     private int exceptWidth;
     private int exceptHeight;
+
+    private Rect scaleRect;
 
     private int _InputTextureTarget;
     private int _InputTextureID;
@@ -73,9 +78,13 @@ public class BeautyRender {
         this._TextureTransform = mat4;
     }
 
-    public void setInputSize(int exceptWidth, int exceptHeight) {
+    public void setInputSize(int cameraWidth, int cameraHeight, int exceptWidth, int exceptHeight) {
+        this.cameraWidth = cameraWidth;
+        this.cameraHeight = cameraHeight;
         this.exceptWidth = exceptWidth;
         this.exceptHeight = exceptHeight;
+
+        scaleRect = getScaleRect();
 
         if (cameraTexture != null) cameraTexture.release();
         cameraTexture = new GlTexture(GLES20.GL_TEXTURE_2D, exceptWidth, exceptHeight);
@@ -158,7 +167,7 @@ public class BeautyRender {
                 id2, // 变量的id
                 1, // 矩阵个数
                 false, // 是否要转置矩阵
-                GlProgram.getScaleTranslation(new Rect(0, 0, exceptWidth, exceptHeight)), // 矩阵数据
+                GlProgram.getScaleTranslation(scaleRect), // 矩阵数据
                 0 // 偏移
         );
         GlUtil.checkGlError("glUniformMatrix4fv");
@@ -297,5 +306,16 @@ public class BeautyRender {
         mixProgram.setSampler2D("inputImageTexture2", 2);
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
         _RenderOutput.endFrame();
+    }
+
+    // 计算cameraSize放大后的Rect
+    private Rect getScaleRect(){
+        Rect rect = new Rect();
+        float ratio = (float) cameraHeight / (float) cameraWidth;
+        rect.left = 0;
+        rect.top = 0;
+        rect.right = exceptWidth;
+        rect.bottom = (int) (exceptWidth * ratio);
+        return rect;
     }
 }

@@ -45,7 +45,7 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener,
 
     //------------------------------------以下代码在Camera线程
 
-    public RecorderMission(Camera camera, SurfaceHolder displaySurface, MediaCodecRecorder mediaCodec, int exceptWidth, int exceptHeight) {
+    public RecorderMission(Camera camera, SurfaceHolder displaySurface, MediaCodecRecorder mediaCodec,int cameraWidth, int cameraHeight, int exceptWidth, int exceptHeight) {
         this.isRunning = true;
         this.exceptWidth = exceptWidth;
         this.exceptHeight = exceptHeight;
@@ -63,7 +63,7 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener,
         render = new BeautyRender();
         render.setRenderOutput(this);
         render.setInputTexture(mTextureTarget, mTextureID);
-        render.setInputSize(exceptWidth, exceptHeight);
+        render.setInputSize(cameraWidth, cameraHeight, exceptWidth, exceptHeight);
         render.realize();
 
         try {

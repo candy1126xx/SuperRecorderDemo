@@ -235,8 +235,8 @@ public class RecordDevice implements
     //--------------------------------------Camera线程
     // 打开摄像头后创建任务
     @Override
-    public void openCameraSuccess(Camera camera) {
-        recorderMission = new RecorderMission(camera, displaySurface, mediaCodec, exceptWidth, exceptHeight);
+    public void openCameraSuccess(Camera camera, Camera.Size previewSize) {
+        recorderMission = new RecorderMission(camera, displaySurface, mediaCodec, previewSize.width, previewSize.height, exceptWidth, exceptHeight);
         mainHandler.obtainMessage(1).sendToTarget();
     }
 

@@ -69,7 +69,7 @@ public class CameraManager {
 
             }else {
                 initCamera();
-                if (callback != null) callback.openCameraSuccess(currentCamera);
+                if (callback != null) callback.openCameraSuccess(currentCamera, previewSize);
             }
         }catch (RuntimeException | InterruptedException e) {
             if (callback != null) callback.openCameraFail();
@@ -155,7 +155,7 @@ public class CameraManager {
     }
 
     public interface CameraManagerCallback{
-        void openCameraSuccess(Camera camera);
+        void openCameraSuccess(Camera camera, Camera.Size previewSize);
         void openCameraFail();
         void cannotFindCamera();
     }
