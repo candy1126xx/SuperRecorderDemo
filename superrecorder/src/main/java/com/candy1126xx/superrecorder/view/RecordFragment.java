@@ -96,12 +96,11 @@ public class RecordFragment extends BaseFragment {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
                 device.init(recordParameter, projectParameter, holder);
-                device.createMission();
             }
 
             @Override
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                holder.setFixedSize(recordParameter.getExceptWidth(), recordParameter.getExceptHeight());
+                device.createMission(width, height);
             }
 
             @Override

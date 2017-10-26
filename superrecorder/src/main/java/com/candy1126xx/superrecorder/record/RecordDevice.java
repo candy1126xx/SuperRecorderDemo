@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 import android.view.SurfaceHolder;
 
 import com.candy1126xx.superrecorder.model.Clip;
@@ -28,6 +29,8 @@ public class RecordDevice implements
 
     private int exceptWidth;
     private int exceptHeight;
+    private int surfaceWidth;
+    private int surfaceHeight;
     private long maxDuration;
 
     private SurfaceHolder displaySurface;
@@ -193,9 +196,15 @@ public class RecordDevice implements
     }
 
     // 创建图像录制任务，实际是打开摄像头
-    public void createMission() {
-        cameraHandler.obtainMessage(1).sendToTarget();
-        audioHandler.obtainMessage(1).sendToTarget();
+    public void createMission(int surfaceWidth, int surfaceHeight) {
+        if (this.surfaceWidth == 0 && this.surfaceHeight == 0) {
+            this.surfaceWidth = surfaceWidth;
+            this.surfaceHeight = surfaceHeight;
+            cameraHandler.obtainMessage(1).sendToTarget();
+            audioHandler.obtainMessage(1).sendToTarget();
+        } else {
+            Log.e("RecordDevice", "cannot create mission more");
+        }
     }
 
     // 结束任务
@@ -236,7 +245,10 @@ public class RecordDevice implements
     // 打开摄像头后创建任务
     @Override
     public void openCameraSuccess(Camera camera, Camera.Size previewSize) {
-        recorderMission = new RecorderMission(camera, displaySurface, mediaCodec, previewSize.width, previewSize.height, exceptWidth, exceptHeight);
+        recorderMission = new RecorderMission(camera, displaySurface, mediaCodec,
+                previewSize.width, previewSize.height,
+                surfaceWidth, surfaceHeight,
+                exceptWidth, exceptHeight);
         mainHandler.obtainMessage(1).sendToTarget();
     }
 

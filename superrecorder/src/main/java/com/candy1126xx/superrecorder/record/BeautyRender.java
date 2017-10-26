@@ -32,15 +32,14 @@ public class BeautyRender {
     private int cameraWidth;
     private int cameraHeight;
 
-    private int exceptWidth;
-    private int exceptHeight;
+    private int surfaceWidth;
+    private int surfaceHeight;
 
+    private Rect viewPort = new Rect();
     private Rect scaleRect;
 
     private int _InputTextureTarget;
     private int _InputTextureID;
-
-    private RenderOutput _RenderOutput;
 
     public BeautyRender() {
     }
@@ -52,10 +51,10 @@ public class BeautyRender {
 
         mixProgram = new GlProgram(RuntimeFilter.getMixVertexShader(), RuntimeFilter.getMixFragShader());
 
-        cameraTexture = new GlTexture(GLES20.GL_TEXTURE_2D, exceptWidth, exceptHeight);
+        cameraTexture = new GlTexture(GLES20.GL_TEXTURE_2D, surfaceWidth, surfaceHeight);
         cameraFrameBuffer = new GlFrameBuffer(cameraTexture.getID());
 
-        gaussTexture = new GlTexture(GLES20.GL_TEXTURE_2D, exceptWidth, exceptHeight);
+        gaussTexture = new GlTexture(GLES20.GL_TEXTURE_2D, surfaceWidth, surfaceHeight);
         gaussFrameBuffer = new GlFrameBuffer(gaussTexture.getID());
     }
 
@@ -78,27 +77,23 @@ public class BeautyRender {
         this._TextureTransform = mat4;
     }
 
-    public void setInputSize(int cameraWidth, int cameraHeight, int exceptWidth, int exceptHeight) {
+    public void setInputSize(int cameraWidth, int cameraHeight, int surfaceWidth, int surfaceHeight) {
         this.cameraWidth = cameraWidth;
         this.cameraHeight = cameraHeight;
-        this.exceptWidth = exceptWidth;
-        this.exceptHeight = exceptHeight;
+        this.surfaceWidth = surfaceWidth;
+        this.surfaceHeight = surfaceHeight;
 
         scaleRect = getScaleRect();
 
         if (cameraTexture != null) cameraTexture.release();
-        cameraTexture = new GlTexture(GLES20.GL_TEXTURE_2D, exceptWidth, exceptHeight);
+        cameraTexture = new GlTexture(GLES20.GL_TEXTURE_2D, surfaceWidth, surfaceHeight);
         if (cameraFrameBuffer != null) cameraFrameBuffer.release();
         cameraFrameBuffer = new GlFrameBuffer(cameraTexture.getID());
 
         if (gaussTexture != null) gaussTexture.release();
-        gaussTexture = new GlTexture(GLES20.GL_TEXTURE_2D, exceptWidth, exceptHeight);
+        gaussTexture = new GlTexture(GLES20.GL_TEXTURE_2D, surfaceWidth, surfaceHeight);
         if (gaussFrameBuffer != null) gaussFrameBuffer.release();
         gaussFrameBuffer = new GlFrameBuffer(gaussTexture.getID());
-    }
-
-    public void setRenderOutput(RenderOutput output) {
-        this._RenderOutput = output;
     }
 
     public void draw() {
@@ -155,10 +150,10 @@ public class BeautyRender {
                 false, // 是否归一化
                 0, // 变量之间的间隔
                 GlUtil.createFloatBuffer(new float[]{ // 装载变量数据的Buffer
-                        0.0F, (float) exceptHeight,
-                        (float) exceptWidth, (float) exceptHeight,
+                        0.0F, (float) surfaceHeight,
+                        (float) surfaceWidth, (float) surfaceHeight,
                         0.0F, 0.0F,
-                        (float) exceptWidth, 0.0F
+                        (float) surfaceWidth, 0.0F
                 }));
         // 输入顶点从模型坐标系到世界坐标系的矩阵
         int id2 = GLES20.glGetUniformLocation(cameraProgram.getID(), "verMatrix");
@@ -196,7 +191,7 @@ public class BeautyRender {
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, cameraFrameBuffer.getID());
         GLES20.glClearColor(0.0F, 0.0F, 0.0F, 0.0F);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-        GLES20.glViewport(0, 0, exceptWidth, exceptHeight);
+        GLES20.glViewport(0, 0, surfaceWidth, surfaceHeight);
         // 把摄像头图像形成的纹理存放在GL_TEXTURE0/GLES11Ext.GL_TEXTURE_EXTERNAL_OES
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(_InputTextureTarget, _InputTextureID);
@@ -270,16 +265,16 @@ public class BeautyRender {
                 1.0F, 1.0F
         });
         // 输入滤波器采样横向偏移，2.0D与高斯计算中的距离相对应
-        gaussProgram.setFloat("texelWidthOffset", (float) Math.sqrt(2.0D) / (float) exceptWidth);
+        gaussProgram.setFloat("texelWidthOffset", (float) Math.sqrt(2.0D) / (float) surfaceWidth);
         // 输入滤波器采样纵向偏移
-        gaussProgram.setFloat("texelHeightOffset", (float) Math.sqrt(2.0D) / (float) exceptWidth);
+        gaussProgram.setFloat("texelHeightOffset", (float) Math.sqrt(2.0D) / (float) surfaceWidth);
 
         // -------------------步骤二：指明输入输出
         // 指明输出buffer为gaussFrameBuffer1。清空，同时gaussTexture变成（0，0，0，0）了
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, gaussFrameBuffer.getID());
         GLES20.glClearColor(0.0F, 0.0F, 0.0F, 0.0F);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-        GLES20.glViewport(0, 0, exceptWidth, exceptHeight);
+        GLES20.glViewport(0, 0, surfaceWidth, surfaceHeight);
         // 把cameraTexture存放在GL_TEXTURE1/GL_TEXTURE_2D
         GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, cameraTexture.getID());
@@ -292,7 +287,10 @@ public class BeautyRender {
         /*
            mixProgram的作用是混合原图和模糊图，输出到帧缓冲区
          */
-        _RenderOutput.beginFrame();
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+        GLES20.glClearColor(0.0F, 0.0F, 0.0F, 0.0F);
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+        GLES20.glViewport(0, 0, surfaceWidth, surfaceHeight);
         GLES20.glUseProgram(mixProgram.getID());
         mixProgram.setVertexAttriArray("position", 2, GlProgram.mVertexLocation);
         mixProgram.setVertexAttriArray("inputTextureCoordinate", 2, GlProgram.mTextureCoord);
@@ -305,17 +303,16 @@ public class BeautyRender {
         GlUtil.checkGlError("glBindTexture");
         mixProgram.setSampler2D("inputImageTexture2", 2);
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
-        _RenderOutput.endFrame();
     }
 
-    // 计算cameraSize放大后的Rect
+    // 计算cameraSize到surfaceSize的缩放
     private Rect getScaleRect(){
         Rect rect = new Rect();
         float ratio = (float) cameraHeight / (float) cameraWidth;
         rect.left = 0;
         rect.top = 0;
-        rect.right = exceptWidth;
-        rect.bottom = (int) (exceptWidth * ratio);
+        rect.right = surfaceWidth;
+        rect.bottom = (int) (surfaceWidth * ratio);
         return rect;
     }
 }
