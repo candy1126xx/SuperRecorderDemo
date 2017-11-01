@@ -35,7 +35,6 @@ public class BeautyRender {
     private int surfaceWidth;
     private int surfaceHeight;
 
-    private Rect viewPort = new Rect();
     private Rect scaleRect;
 
     private int _InputTextureTarget;
@@ -51,10 +50,10 @@ public class BeautyRender {
 
         mixProgram = new GlProgram(RuntimeFilter.getMixVertexShader(), RuntimeFilter.getMixFragShader());
 
-        cameraTexture = new GlTexture(GLES20.GL_TEXTURE_2D, surfaceWidth, surfaceHeight);
+        cameraTexture = new GlTexture(surfaceWidth, surfaceHeight);
         cameraFrameBuffer = new GlFrameBuffer(cameraTexture.getID());
 
-        gaussTexture = new GlTexture(GLES20.GL_TEXTURE_2D, surfaceWidth, surfaceHeight);
+        gaussTexture = new GlTexture(surfaceWidth, surfaceHeight);
         gaussFrameBuffer = new GlFrameBuffer(gaussTexture.getID());
     }
 
@@ -68,9 +67,9 @@ public class BeautyRender {
         cameraTexture = null;
     }
 
-    public void setInputTexture(int textureTarget, int textureID) {
-        this._InputTextureTarget = textureTarget;
-        this._InputTextureID = textureID;
+    public void setInputTexture(GlTexture texture) {
+        this._InputTextureTarget = texture.getTextureTarget();
+        this._InputTextureID = texture.getID();
     }
 
     public void setInputTransform(float[] mat4) {
@@ -86,12 +85,12 @@ public class BeautyRender {
         scaleRect = getScaleRect();
 
         if (cameraTexture != null) cameraTexture.release();
-        cameraTexture = new GlTexture(GLES20.GL_TEXTURE_2D, surfaceWidth, surfaceHeight);
+        cameraTexture = new GlTexture(surfaceWidth, surfaceHeight);
         if (cameraFrameBuffer != null) cameraFrameBuffer.release();
         cameraFrameBuffer = new GlFrameBuffer(cameraTexture.getID());
 
         if (gaussTexture != null) gaussTexture.release();
-        gaussTexture = new GlTexture(GLES20.GL_TEXTURE_2D, surfaceWidth, surfaceHeight);
+        gaussTexture = new GlTexture(surfaceWidth, surfaceHeight);
         if (gaussFrameBuffer != null) gaussFrameBuffer.release();
         gaussFrameBuffer = new GlFrameBuffer(gaussTexture.getID());
     }
@@ -102,18 +101,18 @@ public class BeautyRender {
            即：使cameraTexture = 摄像头图像所形成的纹理。
 
            Vertex Shader：
-           四个输入变量：顶点在模型坐标系中的坐标、顶点从模型坐标系到世界坐标系的矩阵、
-                       顶点纹理在模型坐标系中的坐标、顶点纹理矩阵
-           两个输出变量：顶点在世界坐标系中的坐标，以及所对应的纹理坐标
+           四个输入变量：顶点在世界坐标系中的坐标、正交投影矩阵、
+                       顶点纹理标准坐标、顶点纹理矩阵
+           两个输出变量：顶点在投影坐标系中的坐标，以及所对应的纹理坐标
 
-           attribute vec2 position;       顶点在模型坐标系中的坐标
-           attribute vec2 textureCoord;   顶点纹理在模型坐标系中的坐标
-           uniform mat4 verMatrix;        顶点从模型坐标系到世界坐标系的矩阵
-           uniform mat4 texMatrix;        顶点纹理从模型坐标系到世界坐标系的矩阵
+           attribute vec2 position;       顶点在世界坐标系中的坐标
+           attribute vec2 textureCoord;   顶点纹理标准坐标
+           uniform mat4 verMatrix;        正交投影矩阵
+           uniform mat4 texMatrix;        顶点纹理矩阵
            varying vec2 textureCoordinate;所对应的纹理坐标
 
            void main() {
-               gl_Position =  verMatrix * vec4(position,0,1); 顶点在世界坐标系中的坐标
+               gl_Position =  verMatrix * vec4(position,0,1);
                textureCoordinate = (texMatrix * vec4(textureCoord,0,1)).xy;
            }
 
@@ -137,54 +136,20 @@ public class BeautyRender {
         // 使用cameraProgram
         GLES20.glUseProgram(cameraProgram.getID());
         GlUtil.checkGlError("glUseProgram");
-        // 输入顶点在模型坐标系中的坐标
-        int id1 = GLES20.glGetAttribLocation(cameraProgram.getID(), "position");
-        GlUtil.checkGlError("glGetAttribLocation");
-        GlUtil.checkLocation(id1, "position");
-        GLES20.glEnableVertexAttribArray(id1);
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
-        GLES20.glVertexAttribPointer(
-                id1, // 变量的id
-                2, // 每个变量所包含的元素的个数，比如一个点有两个元素x和y，那么就是2
-                GLES20.GL_FLOAT, // 元素的类型
-                false, // 是否归一化
-                0, // 变量之间的间隔
-                GlUtil.createFloatBuffer(new float[]{ // 装载变量数据的Buffer
+        // 输入顶点在世界坐标系中的坐标
+        cameraProgram.setVertexAttriArray("position", 2,
+                new float[]{ // 装载变量数据的Buffer
                         0.0F, (float) surfaceHeight,
                         (float) surfaceWidth, (float) surfaceHeight,
                         0.0F, 0.0F,
                         (float) surfaceWidth, 0.0F
-                }));
-        // 输入顶点从模型坐标系到世界坐标系的矩阵
-        int id2 = GLES20.glGetUniformLocation(cameraProgram.getID(), "verMatrix");
-        GlUtil.checkLocation(id2, "verMatrix");
-        GLES20.glUniformMatrix4fv(
-                id2, // 变量的id
-                1, // 矩阵个数
-                false, // 是否要转置矩阵
-                GlProgram.getScaleTranslation(scaleRect), // 矩阵数据
-                0 // 偏移
-        );
-        GlUtil.checkGlError("glUniformMatrix4fv");
-        // 输入顶点纹理在模型坐标系中的坐标
-        cameraProgram.setVertexAttriArray("textureCoord", 2,
-                new float[]{
-                        0.0F, 0.0F,
-                        1.0F, 0.0F,
-                        0.0F, 1.0F,
-                        1.0F, 1.0F
                 });
+        // 输入顶点从世界坐标系到视锥坐标系的矩阵
+        cameraProgram.setUniformMatrix4fv("verMatrix", GlProgram.getScaleTranslation(scaleRect));
+        // 输入顶点纹理标准坐标
+        cameraProgram.setVertexAttriArray("textureCoord", 2, GlProgram.mTextureCoord);
         // 输入顶点纹理矩阵
-        int id4 = GLES20.glGetUniformLocation(cameraProgram.getID(), "texMatrix");
-        GlUtil.checkLocation(id4, "texMatrix");
-        GLES20.glUniformMatrix4fv(
-                id4, // 变量的id
-                1, // 矩阵个数
-                false, // 是否要转置矩阵
-                _TextureTransform, // 矩阵数据
-                0 // 偏移
-        );
-        GlUtil.checkGlError("glUniformMatrix4fv");
+        cameraProgram.setUniformMatrix4fv("texMatrix", _TextureTransform);
 
         // -------------------步骤二：指明输入输出
         // 指明输出buffer为cameraFrameBuffer。清空，同时cameraTexture变成（0，0，0，0）了
@@ -195,10 +160,9 @@ public class BeautyRender {
         // 把摄像头图像形成的纹理存放在GL_TEXTURE0/GLES11Ext.GL_TEXTURE_EXTERNAL_OES
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(_InputTextureTarget, _InputTextureID);
+        GlUtil.checkGlError("glBindTexture");
         // 指明输入texture为摄像头图像形成的纹理。0与GL_TEXTURE0对应
-        int id3 = GLES20.glGetUniformLocation(cameraProgram.getID(), "camerTexture");
-        GlUtil.checkLocation(id3, "camerTexture");
-        GLES20.glUniform1i(id3, 0);
+        cameraProgram.setSampler2D("camerTexture", 0);
 
         // --------------------步骤三：执行
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
@@ -232,8 +196,7 @@ public class BeautyRender {
            两个输入变量：滤波器采样坐标（片元）、纹理单元的索引
            一个输出变量：片元的色彩值
 
-           #extension GL_OES_EGL_image_external : require
-           precision mediump float;
+           #extension GL_OES_EGL_image_external : require precision mediump float;
            uniform sampler2D inputImageTexture;      纹理单元的索引
            varying vec2 blurCoordinates[2];          滤波器采样坐标（片元）
 
@@ -306,7 +269,7 @@ public class BeautyRender {
     }
 
     // 计算cameraSize到surfaceSize的缩放
-    private Rect getScaleRect(){
+    private Rect getScaleRect() {
         Rect rect = new Rect();
         float ratio = (float) cameraHeight / (float) cameraWidth;
         rect.left = 0;

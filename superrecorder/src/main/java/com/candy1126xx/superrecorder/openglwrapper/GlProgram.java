@@ -13,8 +13,16 @@ public class GlProgram {
 
     private static String TAG = "GlProgram";
     private int mProgram;
-    public static final float[] mVertexLocation = new float[]{-1.0F, -1.0F, 1.0F, -1.0F, -1.0F, 1.0F, 1.0F, 1.0F};
-    public static final float[] mTextureCoord = new float[]{0.0F, 0.0F, 1.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F};
+    public static final float[] mVertexLocation = new float[]{
+            -1.0F, -1.0F,
+            1.0F, -1.0F,
+            -1.0F, 1.0F,
+            1.0F, 1.0F};
+    public static final float[] mTextureCoord = new float[]{
+            0.0F, 0.0F,
+            1.0F, 0.0F,
+            0.0F, 1.0F,
+            1.0F, 1.0F};
 
     public GlProgram(String vert, String frag) {
         int mVertShader = this.loadShader(GLES20.GL_VERTEX_SHADER, vert);

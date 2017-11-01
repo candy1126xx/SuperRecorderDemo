@@ -2,11 +2,10 @@ package com.candy1126xx.superrecorder.record;
 
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
-import android.opengl.GLES11Ext;
 import android.view.SurfaceHolder;
 
 import com.candy1126xx.superrecorder.openglwrapper.EGLWrapper;
-import com.candy1126xx.superrecorder.openglwrapper.OpenGLUtils;
+import com.candy1126xx.superrecorder.openglwrapper.GlTexture;
 
 import java.io.IOException;
 
@@ -22,8 +21,7 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener 
     private EGLSurface displayEGLSurface;
     private EGLSurface codecEGLSurface;
 
-    private int mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
-    private int mTextureID;
+    private GlTexture originTexture;
     private SurfaceTexture surfaceTexture;
 
     private EGLWrapper eglWrapper;
@@ -51,17 +49,17 @@ public class RecorderMission implements SurfaceTexture.OnFrameAvailableListener 
         codecEGLSurface = eglWrapper.createWindowSurface(mediaCodec.getInputSurface());
         eglWrapper.makeCurrent(tempEGLSurface);
 
-        mTextureID = OpenGLUtils.createTextureObject(mTextureTarget);
-        surfaceTexture = new SurfaceTexture(mTextureID);
+        originTexture = new GlTexture();
+        surfaceTexture = new SurfaceTexture(originTexture.getID());
         surfaceTexture.setOnFrameAvailableListener(this);
 
         previewRender = new BeautyRender();
-        previewRender.setInputTexture(mTextureTarget, mTextureID);
+        previewRender.setInputTexture(originTexture);
         previewRender.setInputSize(cameraWidth, cameraHeight, surfaceWidth, surfaceHeight);
         previewRender.realize();
 
         recordRender = new BeautyRender();
-        recordRender.setInputTexture(mTextureTarget, mTextureID);
+        recordRender.setInputTexture(originTexture);
         recordRender.setInputSize(cameraWidth, cameraHeight, expectWidth, expectHeight);
         recordRender.realize();
 

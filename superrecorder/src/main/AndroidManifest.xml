@@ -20,7 +20,11 @@
         android:supportsRtl="true">
 
         <activity
-            android:name=".view.SuperRecorderActivity"
+            android:name=".view.RecordActivity"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".view.FilterActivity"
             android:screenOrientation="portrait" />
     </application>
 

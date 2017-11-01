@@ -35,7 +35,7 @@ public class RuntimeFilter {
                 "attribute vec2 inputTextureCoordinate;\n" +
                 "uniform float texelWidthOffset;\n" +
                 "uniform float texelHeightOffset;\n" +
-                "varying vec2 blurCoordinates[2];\n" +
+                "varying vec2 blurCoordinates[3];\n" +
                 "\n" +
                 "void main() {\n" +
                 "    gl_Position = vec4(position.xy,0,1);\n" +
@@ -63,7 +63,7 @@ public class RuntimeFilter {
         return "#extension GL_OES_EGL_image_external : require\n" +
                 "precision mediump float;\n" +
                 "uniform sampler2D inputImageTexture;\n" +
-                "varying vec2 blurCoordinates[2];\n" +
+                "varying vec2 blurCoordinates[3];\n" +
                 "\n" +
                 "void main() {\n" +
                 "    vec4 sum = vec4(0.0);\n" +

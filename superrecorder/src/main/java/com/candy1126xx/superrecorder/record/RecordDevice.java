@@ -58,6 +58,8 @@ public class RecordDevice implements
     private boolean cameraReady, audioReady;
     private LinkedList<Clip> clips = new LinkedList<>(); // 主线程专用
 
+    private boolean finished;
+
     private RecordDevice() {
     }
 
@@ -209,8 +211,11 @@ public class RecordDevice implements
 
     // 结束任务
     public void finishMission() {
-        cameraHandler.obtainMessage(2).sendToTarget();
-        audioHandler.obtainMessage(2).sendToTarget();
+        if (!finished) {
+            finished = true;
+            cameraHandler.obtainMessage(2).sendToTarget();
+            audioHandler.obtainMessage(2).sendToTarget();
+        }
     }
 
     // 开始写入文件
